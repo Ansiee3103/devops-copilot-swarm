@@ -115,6 +115,6 @@ if not "%EC2_IP%"="" (
         echo   AWS API Health  : http://%EC2_IP%/health
     )
 )
-echo ========================================
+echo ===========================================
 echo.
 pause
