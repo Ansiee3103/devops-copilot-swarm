@@ -91,11 +91,12 @@ jobs:
           aws-region:            ${{ env.AWS_REGION }}
 
       - name: Login to ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push
         run: |
-          ECR_URI=${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}
+          ECR_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPO }}
           TAG=${{ steps.vars.outputs.tag }}
           
           echo "🏗️ Building image: $ECR_URI:$TAG"
@@ -103,10 +104,6 @@ jobs:
           # Debug: Check if Dockerfile exists
           ls -la docker/ || echo "❌ docker/ directory not found"
           cat docker/Dockerfile || echo "❌ Dockerfile not found"
-          
-          # Get ECR login credentials
-          aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
-            docker login --username AWS --password-stdin $ECR_URI
           
           docker build -f docker/Dockerfile \
             --no-cache \
