@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: write
+
 env:
   AWS_REGION:  ap-south-1
   ECR_REPO:    devops-copilot-swarm
@@ -127,11 +130,12 @@ jobs:
     name: 🚀 Deploy to EC2
     runs-on: ubuntu-latest
     needs: build
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
 
     steps:
       - name: Deploy via SSH (main) or validate (non-main)
         env:
-          EC2_HOST:    ${{ secrets.EC2_HOST }}
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
           if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
@@ -167,7 +171,7 @@ jobs:
 
             for i in {1..5}; do
               STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-                https://13.207.184.168.nip.io/health)
+                https://${EC2_HOST}.nip.io/health)
               if [ "$STATUS" = "200" ]; then
                 echo "✅ Health check passed!"
                 exit 0
@@ -195,7 +199,7 @@ jobs:
                 owner:  context.repo.owner,
                 repo:   context.repo.repo,
                 commit_sha: context.sha,
-                body: `${emoji} Deployment \`${sha}\` ${status}\n\n🌐 https://13.207.184.168.nip.io/dashboard/index.html`
+                body: `${emoji} Deployment \`${sha}\` ${status}\n\n🌐 https://${process.env.EC2_HOST}.nip.io/dashboard/index.html`
               });
             } catch (error) {
               core.warning(`Failed to post deployment status to commit: ${error.message}`);
