@@ -104,6 +104,10 @@ jobs:
           ls -la docker/ || echo "❌ docker/ directory not found"
           cat docker/Dockerfile || echo "❌ Dockerfile not found"
           
+          # Get ECR login credentials
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+            docker login --username AWS --password-stdin $ECR_URI
+          
           docker build -f docker/Dockerfile \
             --no-cache \
             -t $ECR_URI:$TAG \
