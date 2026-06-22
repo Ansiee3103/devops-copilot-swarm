@@ -10,13 +10,12 @@ permissions:
   contents: write
 
 env:
-  AWS_REGION:  ap-south-1
-  ECR_REPO:    devops-copilot-swarm
-  ACCOUNT_ID:  "006600132909"
-  EC2_USER:    ubuntu
+  AWS_REGION: ap-south-1
+  ECR_REPO: devops-copilot-swarm
+  ACCOUNT_ID: "006600132909"
+  EC2_USER: ubuntu
 
 jobs:
-
   # ── Job 1: Tests ──────────────────────────────────────
   test:
     name: 🧪 Run Tests
@@ -28,7 +27,7 @@ jobs:
       - name: Setup Python 3.12
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
+          python-version: "3.12"
           cache: pip
 
       - name: Install dependencies
@@ -36,8 +35,8 @@ jobs:
 
       - name: Run tests
         env:
-          APP_ENV:      testing
-          SECRET_KEY:   test-secret-key-minimum-32-chars-here
+          APP_ENV: testing
+          SECRET_KEY: test-secret-key-minimum-32-chars-here
           GROQ_API_KEY: test-key
           DATABASE_URL: sqlite:///database/test.db
         run: |
@@ -64,10 +63,10 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
-          scan-ref:  .
-          severity:  CRITICAL,HIGH
+          scan-ref: .
+          severity: CRITICAL,HIGH
           exit-code: 0
-          format:    table
+          format: table
 
   # ── Job 3: Build & Push to ECR ───────────────────────
   build:
@@ -87,26 +86,26 @@ jobs:
 
       - name: Build and push
         env:
-          AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           REGISTRY=${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
           ECR_URI=$REGISTRY/${{ env.ECR_REPO }}
           TAG=${{ steps.vars.outputs.tag }}
-          
+
           echo "🏗️ Building image: $ECR_URI:$TAG"
-          
+
           # Debug: Check if Dockerfile exists
           ls -la docker/ || echo "❌ docker/ directory not found"
           cat docker/Dockerfile || echo "❌ Dockerfile not found"
-          
+
           docker build -f docker/Dockerfile \
             --no-cache \
             -t $ECR_URI:$TAG \
             -t $ECR_URI:latest \
             --progress=plain \
             .
-          
+
           if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
             if [ "${#AWS_ACCESS_KEY_ID}" -eq 0 ] || [ "${#AWS_SECRET_ACCESS_KEY}" -eq 0 ]; then
               echo "❌ AWS credentials are required for main branch push"
