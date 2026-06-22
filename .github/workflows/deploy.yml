@@ -105,7 +105,7 @@ jobs:
             .
           
           if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
-            if [ -z "${AWS_ACCESS_KEY_ID}" ] || [ -z "${AWS_SECRET_ACCESS_KEY}" ]; then
+            if [ "${#AWS_ACCESS_KEY_ID}" -eq 0 ] || [ "${#AWS_SECRET_ACCESS_KEY}" -eq 0 ]; then
               echo "❌ AWS credentials are required for main branch push"
               exit 1
             fi
@@ -198,5 +198,5 @@ jobs:
                 body: `${emoji} Deployment \`${sha}\` ${status}\n\n🌐 https://13.207.184.168.nip.io/dashboard/index.html`
               });
             } catch (error) {
-              core.warning(`Unable to post commit comment: ${error.message}`);
+              core.warning(`Failed to post deployment status to commit: ${error.message}`);
             }
