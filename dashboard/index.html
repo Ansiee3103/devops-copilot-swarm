@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#0d1117"/>
+  <link rel="manifest" href="/dashboard/manifest.json"/>
+  <title>DevOps Copilot Swarm</title>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 28px;
+      color: #58a6ff;
+      margin-bottom: 5px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #8b949e;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    /* ── Login ── */
+    #login-overlay {
+      position: fixed; top:0; left:0;
+      width:100%; height:100%;
+      background: #0d1117;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-box {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 16px;
+      padding: 40px;
+      width: 380px;
+      text-align: center;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 12px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #e6edf3;
+      font-size: 14px;
+    }
+
+    .login-box input:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      background: #1f6feb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+
+    .login-btn:hover { background: #388bfd; }
+
+    /* ── User Bar ── */
+    #user-bar {
+      display: none;
+      text-align: right;
+      max-width: 1200px;
+      margin: 0 auto 10px;
+      font-size: 13px;
+      color: #8b949e;
+    }
+
+    /* ── Deploy Form ── */
+    .deploy-form {
+      max-width: 1200px;
+      margin: 0 auto 20px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .deploy-form select,
+    .deploy-form input {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      font-size: 14px;
+      min-width: 200px;
+    }
+
+    .deploy-form select:focus,
+    .deploy-form input:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn-primary  { background:#1f6feb; color:white; }
+    .btn-primary:hover { background:#388bfd; }
+    .btn-primary:disabled { background:#21262d; cursor:not-allowed; }
+    .btn-secondary { background:#21262d; color:#e6edf3; border:1px solid #30363d; }
+    .btn-secondary:hover { background:#2d333b; }
+
+    /* ── Top Bar ── */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto 20px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 15px 25px;
+    }
+
+    .top-bar .service { font-size: 18px; font-weight: bold; }
+    .top-bar .meta    { font-size: 12px; color: #8b949e; margin-top: 3px; }
+
+    /* ── Stats Bar ── */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      max-width: 1200px;
+      margin: 0 auto 20px;
+    }
+
+    .stat-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 15px 20px;
+      text-align: center;
+    }
+
+    .stat-card .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #58a6ff;
+    }
+
+    .stat-card .stat-label {
+      font-size: 12px;
+      color: #8b949e;
+      margin-top: 4px;
+    }
+
+    /* ── Grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .card h2 {
+      font-size: 15px;
+      margin-bottom: 15px;
+      color: #e6edf3;
+    }
+
+    .full-width { grid-column: span 2; }
+
+    /* ── Status Row ── */
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #21262d;
+      font-size: 14px;
+    }
+
+    .status-row:last-child { border-bottom: none; }
+
+    /* ── Badges ── */
+    .badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .badge.green  { background:#1a3a2a; color:#3fb950; }
+    .badge.red    { background:#3a1a1a; color:#f85149; }
+    .badge.yellow { background:#3a2e1a; color:#d29922; }
+    .badge.blue   { background:#1a2a3a; color:#58a6ff; }
+    .badge.gray   { background:#21262d; color:#8b949e; }
+    .badge.orange { background:#3a2a1a; color:#e3b341; }
+
+    /* ── Risk Bars ── */
+    .risk-bar-wrap { margin-top: 12px; }
+
+    .risk-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: #8b949e;
+    }
+
+    .risk-bar {
+      height: 10px;
+      border-radius: 5px;
+      background: #21262d;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+
+    .risk-fill {
+      height: 100%;
+      border-radius: 5px;
+      transition: width 1.2s ease;
+    }
+
+    .risk-fill.low    { background: #3fb950; }
+    .risk-fill.medium { background: #d29922; }
+    .risk-fill.high   { background: #f85149; }
+
+    /* ── Heal Actions ── */
+    .heal-action {
+      background: #0d1117;
+      border-left: 3px solid #3fb950;
+      border-radius: 4px;
+      padding: 8px 12px;
+      margin: 6px 0;
+      font-size: 13px;
+      color: #8b949e;
+      line-height: 1.6;
+    }
+
+    .heal-action span { color: #3fb950; font-weight: bold; }
+
+    /* ── Log Box ── */
+    .log-box {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #8b949e;
+      max-height: 280px;
+      overflow-y: auto;
+      line-height: 2;
+    }
+
+    .log-ok   { color: #3fb950; }
+    .log-err  { color: #f85149; }
+    .log-warn { color: #d29922; }
+    .log-info { color: #58a6ff; }
+
+    /* ── History Table ── */
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .history-table th {
+      text-align: left;
+      padding: 10px 12px;
+      color: #8b949e;
+      border-bottom: 2px solid #21262d;
+      font-weight: 600;
+    }
+
+    .history-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #21262d;
+    }
+
+    .history-table tr:last-child td { border-bottom: none; }
+    .history-table tr:hover td {
+      background: #1c2128;
+      cursor: pointer;
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #1f6feb;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      display: none;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar       { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0d1117; }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .grid {
+            grid-template-columns: 1fr !important;
+        }
+        .stats-bar {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .deploy-form {
+            flex-direction: column;
+        }
+        .deploy-form select,
+        .deploy-form input {
+            width: 100% !important;
+        }
+        .full-width {
+            grid-column: span 1 !important;
+        }
+        h1 { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Login Overlay ───────────────────────────────────── -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div style="font-size:48px; margin-bottom:12px">🚀</div>
+    <h2 style="color:#58a6ff; margin-bottom:6px; font-size:22px">
+      DevOps Copilot Swarm
+    </h2>
+    <p style="color:#8b949e; font-size:13px; margin-bottom:28px">
+      Risk-Aware Deployment & Self-Healing Control Plane
+    </p>
+
+    <input id="login-username" type="text"
+           placeholder="Username" autocomplete="username"/>
+    <input id="login-password" type="password"
+           placeholder="Password" autocomplete="current-password"
+           onkeypress="if(event.key==='Enter') doLogin()"/>
+
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+
+    <div id="login-error"
+         style="color:#f85149; font-size:13px; margin-top:12px; display:none">
+      ❌ Invalid username or password
+    </div>
+
+    <p style="color:#8b949e; font-size:12px; margin-top:20px">
+      Default credentials: <strong>admin</strong> / <strong>admin123</strong>
+    </p>
+  </div>
+</div>
+
+<!-- ── Header ─────────────────────────────────────────── -->
+<h1>🚀 DevOps Copilot Swarm</h1>
+<p class="subtitle">
+  Risk-Aware Deployment & Self-Healing Control Plane — Google Online Boutique
+</p>
+
+<!-- ── User Bar ───────────────────────────────────────── -->
+<div id="user-bar">
+  👤 <span id="user-display" style="color:#e6edf3"></span>
+  <span id="admin-badge" style="display:none">
+    &nbsp;<span class="badge yellow">👑 Admin</span>
+  </span>
+  <button class="btn btn-secondary"
+          onclick="doLogout()"
+          style="margin-left:10px; padding:4px 12px; font-size:12px">
+    Logout
+  </button>
+</div>
+
+<!-- ── Deploy Form ─────────────────────────────────────── -->
+<div class="deploy-form">
+  <select id="service-select">
+    <option value="">Select a service...</option>
+    <option value="emailservice">📧 emailservice (Python)</option>
+    <option value="recommendationservice">⭐ recommendationservice (Python)</option>
+    <option value="adservice">📢 adservice (Java)</option>
+    <option value="shippingservice">🚚 shippingservice (Go)</option>
+    <option value="currencyservice">💱 currencyservice (Node.js)</option>
+    <option value="paymentservice">💳 paymentservice (Node.js)</option>
+    <option value="cartservice">🛒 cartservice (C#)</option>
+    <option value="checkoutservice">🏪 checkoutservice (Go)</option>
+    <option value="frontend">🖥️ frontend (Go)</option>
+    <option value="productcatalogservice">📦 productcatalogservice (Go)</option>
+  </select>
+
+  <input id="repo-input" type="text" 
+         placeholder="Repo URL" 
+         value="https://github.com/GoogleCloudPlatform/microservices-demo.git" />
+
+  <input id="changes-input" type="text"
+         placeholder="Describe your changes (e.g. Updated payment logic)"
+         onkeypress="if(event.key==='Enter') triggerDeploy()"/>
+
+  <button id="deploy-btn" class="btn btn-primary" onclick="triggerDeploy()">
+    🚀 Deploy
+  </button>
+
+  <button class="btn btn-secondary" onclick="loadHistory()">
+    📋 History
+  </button>
+
+  <button class="btn btn-secondary" onclick="loadStats()">
+    📊 Stats
+  </button>
+</div>
+
+<!-- ── Top Bar ────────────────────────────────────────── -->
+<div class="top-bar">
+  <div>
+    <div class="service" id="service-name">⚙️ No deployment running</div>
+    <div class="meta"    id="repo-url">Select a service and click Deploy</div>
+  </div>
+  <div id="pipeline-status">
+    <span class="badge gray">⏳ Idle</span>
+  </div>
+  <div style="text-align:right; font-size:12px; color:#8b949e"
+       id="last-updated">—</div>
+</div>
+
+<!-- ── Stats Bar ──────────────────────────────────────── -->
+<div class="stats-bar" id="stats-bar">
+  <div class="stat-card">
+    <div class="stat-value" id="stat-total">—</div>
+    <div class="stat-label">Total Deployments</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="stat-success" style="color:#3fb950">—</div>
+    <div class="stat-label">Successful</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="stat-blocked" style="color:#d29922">—</div>
+    <div class="stat-label">Blocked</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="stat-risk" style="color:#f85149">—</div>
+    <div class="stat-label">Avg Risk Score</div>
+  </div>
+</div>
+
+<!-- ── Charts Section ──────────────────────────────────── -->
+<div class="grid" style="margin-bottom:20px">
+
+  <!-- Deployment Status Chart -->
+  <div class="card">
+    <h2>📊 Deployment Overview</h2>
+    <canvas id="statusChart" height="200"></canvas>
+  </div>
+
+  <!-- Risk Score Trend -->
+  <div class="card">
+    <h2>📈 Risk Score Trend</h2>
+    <canvas id="riskChart" height="200"></canvas>
+  </div>
+
+</div>
+
+<!-- ── Main Grid ───────────────────────────────────────── -->
+<div class="grid">
+
+  <!-- Agent Pipeline Status -->
+  <div class="card">
+    <h2>🤖 Agent Pipeline Status</h2>
+    <div class="status-row">
+      <span>🧠 Orchestrator Agent</span>
+      <span class="badge gray" id="ag-orchestrator">⏳ Idle</span>
+    </div>
+    <div class="status-row">
+      <span>🏗️ Builder Agent</span>
+      <span class="badge gray" id="ag-builder">⏳ Idle</span>
+    </div>
+    <div class="status-row">
+      <span>🔍 Blast Radius Agent</span>
+      <span class="badge gray" id="ag-blast">⏳ Idle</span>
+    </div>
+    <div class="status-row">
+      <span>🚢 Deployment</span>
+      <span class="badge gray" id="ag-deploy">⏳ Idle</span>
+    </div>
+    <div class="status-row">
+      <span>🔧 AutoHealer Agent</span>
+      <span class="badge gray" id="ag-healer">⏳ Idle</span>
+    </div>
+  </div>
+
+  <!-- Blast Radius Analysis -->
+  <div class="card">
+    <h2>🔍 Blast Radius Analysis</h2>
+    <div id="blast-bars">
+      <p style="color:#8b949e; font-size:13px">
+        Waiting for analysis...
+      </p>
+    </div>
+  </div>
+
+  <!-- Generated Configs -->
+  <div class="card">
+    <h2>📁 Generated Configs</h2>
+    <div id="generated-files">
+      <p style="color:#8b949e; font-size:13px">
+        Waiting for builder...
+      </p>
+    </div>
+  </div>
+
+  <!-- AutoHealer Report -->
+  <div class="card">
+    <h2>🔧 AutoHealer Report</h2>
+    <div id="heal-report">
+      <p style="color:#8b949e; font-size:13px">
+        Waiting for deployment...
+      </p>
+    </div>
+  </div>
+
+  <!-- Live Pipeline Logs -->
+  <div class="card full-width">
+    <h2>📋 Live Pipeline Logs</h2>
+    <div class="log-box" id="live-logs">
+      <div class="log-info">
+        Select a service and click Deploy to start...
+      </div>
+    </div>
+  </div>
+
+  <!-- Deployment History -->
+  <div class="card full-width">
+    <h2>📊 Deployment History</h2>
+    <div id="history-container">
+      <p style="color:#8b949e; font-size:13px">
+        Click History to load...
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Toast ──────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<script>
+// ── Config ───────────────────────────────────────────────
+const API = ""; // Use relative paths to avoid port/origin issues
+
+// ── State ────────────────────────────────────────────────
+let authToken    = localStorage.getItem("token") || "";
+let currentId    = null;
+let pollTimer    = null;
+let eventSource  = null;
+
+let statusChart = null;
+let riskChart   = null;
+
+// ── Init ─────────────────────────────────────────────────
+window.addEventListener("DOMContentLoaded", () => {
+  console.log("Dashboard DOM loaded. Initializing...");
+  try {
+    initCharts();
+  } catch (e) {
+    console.error("Chart initialization failed:", e);
+  }
+
+  if (authToken) {
+    try {
+      showApp();
+      loadStats();
+      loadHistory();
+    } catch (e) {
+      console.error("Post-auth initialization failed:", e);
+    }
+  } else {
+    console.log("No auth token found. Showing login overlay.");
+  }
+});
+
+// ── Auth ─────────────────────────────────────────────────
+async function doLogin() {
+  const username = document.getElementById("login-username").value.trim();
+  const password = document.getElementById("login-password").value;
+  const errDiv   = document.getElementById("login-error");
+
+  errDiv.style.display = "none";
+
+  if (!username || !password) {
+    errDiv.textContent   = "❌ Please enter username and password";
+    errDiv.style.display = "block";
+    return;
+  }
+
+  try {
+    const params = new URLSearchParams();
+    params.append("username", username);
+    params.append("password", password);
+
+    const res  = await fetch(`${API}/auth/login`, {
+      method:  "POST",
+      headers: {"Content-Type": "application/x-www-form-urlencoded"},
+      body:    params
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      errDiv.textContent   = `❌ ${data.detail || "Login failed"}`;
+      errDiv.style.display = "block";
+      return;
+    }
+
+    const data = await res.json();
+    authToken = data.access_token;
+      localStorage.setItem("token",    authToken);
+      localStorage.setItem("username", data.username);
+      localStorage.setItem("is_admin", data.is_admin);
+
+      document.getElementById("user-display").textContent = data.full_name || data.username;
+      if (data.is_admin) {
+        document.getElementById("admin-badge").style.display = "inline";
+      }
+
+      showApp();
+      loadStats();
+      loadHistory();
+      showToast(`👋 Welcome back, ${data.username}!`);
+    } catch(e) {
+    errDiv.textContent   = "❌ Cannot connect to server. Is it running?";
+    errDiv.style.display = "block";
+  }
+}
+
+function showApp() {
+  document.getElementById("login-overlay").style.display = "none";
+  document.getElementById("user-bar").style.display      = "block";
+  document.getElementById("user-display").textContent    =
+    localStorage.getItem("username") || "User";
+  if (localStorage.getItem("is_admin") === "true") {
+    document.getElementById("admin-badge").style.display = "inline";
+  }
+}
+
+function doLogout() {
+  authToken = "";
+  localStorage.clear();
+  location.reload();
+}
+
+// ── API Helper ────────────────────────────────────────────
+async function apiFetch(endpoint, options = {}) {
+  try {
+    const res = await fetch(`${API}${endpoint}`, {
+      ...options,
+      headers: {
+        "Content-Type":  "application/json",
+        "Authorization": `Bearer ${authToken}`,
+        ...(options.headers || {})
+      }
+    });
+
+    if (res.status === 401) {
+      doLogout();
+      return null;
+    }
+
+    return res;
+  } catch(e) {
+    console.error(`API error [${endpoint}]:`, e);
+    return null;
+  }
+}
+
+// ── SSE ───────────────────────────────────────────────────
+function startSSE(deploymentId) {
+    if (eventSource) {
+        eventSource.close();
+    }
+
+    // ✅ Pass token as query param (SSE can't use headers)
+    const url = `${API}/api/v1/stream/${deploymentId}?token=${authToken}`;
+    eventSource = new EventSource(url);
+
+    eventSource.addEventListener("log", (e) => {
+        const data = JSON.parse(e.data);
+        appendLog(data.log);
+    });
+
+    eventSource.addEventListener("status", (e) => {
+        const data = JSON.parse(e.data);
+        updateStatusBadges(data);
+    });
+
+    eventSource.addEventListener("complete", () => {
+        eventSource.close();
+        loadHistory();
+        loadStats();
+    });
+
+    eventSource.onerror = () => {
+        eventSource.close();
+        startPolling(); // fallback
+    };
+}
+
+// ── Polling (SSE fallback) ────────────────────────────────
+function startPolling() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(pollStatus, 2000);
+  pollStatus();
+}
+
+async function pollStatus() {
+  if (!currentId) return;
+  try {
+    const res = await apiFetch(`/api/v1/status/${currentId}`);
+    if (!res) return;
+    const data = await res.json();
+    updateDashboard(data);
+
+    if (["healed", "blocked", "failed"].includes(data.status)) {
+      clearInterval(pollTimer);
+      loadHistory();
+      loadStats();
+    }
+  } catch(e) {
+    console.error("Poll error:", e);
+  }
+}
+
+// ── Append a single log line incrementally ────────────────
+function appendLog(log) {
+  const logBox = document.getElementById("live-logs");
+  if (!logBox) return;
+  const div = document.createElement("div");
+  let cls   = "log-info";
+  if      (log.includes("✅")) cls = "log-ok";
+  else if (log.includes("❌")) cls = "log-err";
+  else if (log.includes("⚠️")) cls = "log-warn";
+  div.className   = cls;
+  div.textContent = log;
+  logBox.appendChild(div);
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+// ── Update status badges from a partial SSE status event ──
+function updateStatusBadges(data) {
+  if (!data) return;
+  document.getElementById("pipeline-status").innerHTML =
+    getStatusBadge(data.status);
+  document.getElementById("last-updated").textContent =
+    `Updated: ${new Date().toLocaleTimeString("en-IN", {timeZone:"Asia/Kolkata"})}`;
+  updateAgentBadges(data.status);
+}
+
+// ── Update triggerDeploy ──────────────────────────────────
+async function triggerDeploy() {
+  const service = document.getElementById("service-select").value;
+  const changes = document.getElementById("changes-input").value.trim();
+
+  if (!service) { showToast("⚠️ Please select a service!"); return; }
+  if (!changes || changes.length < 3) {
+    showToast("⚠️ Please describe your changes!");
+    return;
+  }
+
+  const btn = document.getElementById("deploy-btn");
+  btn.disabled    = true;
+  btn.textContent = "🔄 Deploying...";
+
+  try {
+    const res = await apiFetch("/api/v1/deploy", {
+      method: "POST",
+      body:   JSON.stringify({
+        repo_url:     "https://github.com/GoogleCloudPlatform/microservices-demo",
+        service_name: service,
+        changes:      changes
+      })
+    });
+
+    if (!res) return;
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast(`❌ Error: ${data.detail || JSON.stringify(data)}`);
+      return;
+    }
+
+    currentId = data.deployment_id;
+    showToast(`🚀 Deployment #${currentId} started!`);
+    resetDashboard();
+    startSSE(currentId); // ✅ Use SSE for real-time updates
+
+  } catch(e) {
+    showToast(`❌ Failed: ${e.message}`);
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = "🚀 Deploy";
+  }
+}
+
+
+// ── Dashboard Update ─────────────────────────────────────
+function resetDashboard() {
+  document.getElementById("blast-bars").innerHTML =
+    `<p style="color:#8b949e;font-size:13px">Analyzing...</p>`;
+  document.getElementById("generated-files").innerHTML =
+    `<p style="color:#8b949e;font-size:13px">Generating...</p>`;
+  document.getElementById("heal-report").innerHTML =
+    `<p style="color:#8b949e;font-size:13px">Waiting...</p>`;
+  document.getElementById("live-logs").innerHTML =
+    `<div class="log-info">Pipeline starting...</div>`;
+
+  ["ag-orchestrator","ag-builder","ag-blast","ag-deploy","ag-healer"]
+    .forEach(id => {
+      const el = document.getElementById(id);
+      el.className   = "badge gray";
+      el.textContent = "⏳ Idle";
+    });
+}
+
+function updateDashboard(data) {
+  if (!data) return;
+
+  // Top bar
+  document.getElementById("service-name").textContent =
+    `⚙️ ${data.service_name} ${data.language ? '('+data.language+')' : ''}`;
+  document.getElementById("repo-url").textContent =
+    data.repo_url || "";
+  document.getElementById("pipeline-status").innerHTML =
+    getStatusBadge(data.status);
+  document.getElementById("last-updated").textContent =
+    `Updated: ${new Date().toLocaleTimeString('en-IN', {timeZone:'Asia/Kolkata'})}`;
+
+  // Agent badges
+  updateAgentBadges(data.status);
+
+  // Blast radius
+  if (data.risk_score !== null && data.risk_score !== undefined) {
+    const affected = data.affected_services || [];
+    let html = buildRiskBar(data.service_name, data.risk_score);
+    affected.forEach((svc, i) => {
+      const scores = [7,3,5,6,4,8,3,5];
+      html += buildRiskBar(`${svc} (affected)`, scores[i % scores.length]);
+    });
+    if (data.risk_analysis) {
+      html += `<p style="font-size:12px; color:#8b949e; margin-top:12px; line-height:1.6">
+        ${data.risk_analysis.substring(0,200)}...
+      </p>`;
+    }
+    document.getElementById("blast-bars").innerHTML = html;
+  }
+
+  // Generated files
+  if (data.generated_files && data.generated_files.length > 0) {
+    const icons = {
+      "Dockerfile":        "🐳",
+      "k8s-manifest.yaml": "☸️",
+      "pipeline.yml":      "⚙️"
+    };
+    let html = "";
+    data.generated_files.forEach(f => {
+      html += `
+        <div class="status-row">
+          <span>${icons[f] || "📄"} ${f}</span>
+          <span class="badge blue">✅ Generated</span>
+        </div>`;
+    });
+    document.getElementById("generated-files").innerHTML = html;
+  }
+
+  // Healing report
+  if (data.healing_report) {
+    const lines = data.healing_report
+      .replace(/\*\*/g, "")
+      .split('\n')
+      .filter(l => l.trim())
+      .slice(0, 6);
+    let html = "";
+    lines.forEach((line, i) => {
+      html += `
+        <div class="heal-action">
+          <span>${i+1}.</span> ${line.trim()}
+        </div>`;
+    });
+    document.getElementById("heal-report").innerHTML = html;
+  }
+
+  // Live logs
+  if (data.logs && data.logs.length > 0) {
+    let html = "";
+    data.logs.forEach(log => {
+      let cls = "log-info";
+      if (log.includes("✅")) cls = "log-ok";
+      else if (log.includes("❌")) cls = "log-err";
+      else if (log.includes("⚠️")) cls = "log-warn";
+      html += `<div class="${cls}">${log}</div>`;
+    });
+    const logBox = document.getElementById("live-logs");
+    logBox.innerHTML  = html;
+    logBox.scrollTop  = logBox.scrollHeight;
+  }
+}
+
+function updateAgentBadges(status) {
+  const statusOrder = [
+    "running", "orchestrated", "built",
+    "deployed", "healed", "blocked", "failed"
+  ];
+  const idx = statusOrder.indexOf(status);
+
+  function setBadge(id, color, text) {
+    const el = document.getElementById(id);
+    if (el) { el.className = `badge ${color}`; el.textContent = text; }
+  }
+
+  // Orchestrator
+  if (idx >= 1)      setBadge("ag-orchestrator", "green",  "✅ Done");
+  else if (idx === 0) setBadge("ag-orchestrator", "blue",   "🔄 Running");
+  else                setBadge("ag-orchestrator", "gray",   "⏳ Idle");
+
+  // Builder
+  if (idx >= 2)      setBadge("ag-builder", "green",  "✅ Done");
+  else if (idx === 1) setBadge("ag-builder", "blue",   "🔄 Running");
+  else                setBadge("ag-builder", "gray",   "⏳ Idle");
+
+  // Blast Radius
+  if (idx >= 3)      setBadge("ag-blast", "yellow", "⚠️ Analyzed");
+  else if (idx === 2) setBadge("ag-blast", "blue",   "🔄 Running");
+  else                setBadge("ag-blast", "gray",   "⏳ Idle");
+
+  // Deployment
+  if (status === "healed")   setBadge("ag-deploy", "green",  "✅ Deployed");
+  else if (status === "blocked") setBadge("ag-deploy", "orange", "🛡️ Blocked");
+  else if (status === "failed")  setBadge("ag-deploy", "red",    "❌ Failed");
+  else if (idx >= 3)             setBadge("ag-deploy", "blue",   "🔄 Running");
+  else                           setBadge("ag-deploy", "gray",   "⏳ Idle");
+
+  // AutoHealer
+  if (status === "healed")   setBadge("ag-healer", "green", "✅ Healed");
+  else if (idx >= 3 && status !== "blocked")
+                               setBadge("ag-healer", "blue",  "🔄 Running");
+  else                        setBadge("ag-healer", "gray",  "⏳ Idle");
+}
+
+// ── History ───────────────────────────────────────────────
+async function loadHistory() {
+  console.log("Attempting to load history...");
+  try {
+    const res = await apiFetch("/api/v1/history");
+    if (!res || !res.ok) {
+      console.error("History fetch failed", res);
+      showToast("❌ Failed to load history");
+      return;
+    }
+    const data = await res.json();
+    console.log("History data received:", data);
+
+    const container = document.getElementById("history-container");
+    if (!container) return;
+
+    if (!Array.isArray(data) || data.length === 0) {
+      container.innerHTML = `<p style="color:#8b949e;font-size:13px">No deployments found.</p>`;
+      return;
+    }
+
+    let html = `
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Service</th>
+            <th>Risk</th>
+            <th>Status</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+    data.forEach(d => {
+      const risk = getRiskInfo(d.risk_score || 0);
+      const dateStr = d.created_at ? new Date(d.created_at).toLocaleString() : "—";
+      
+      html += `
+        <tr onclick="loadDeployment(${d.id})">
+          <td style="color:#8b949e">#${d.id}</td>
+          <td><strong>${d.service_name}</strong></td>
+          <td>
+            <span class="badge ${risk.color}">
+              ${risk.icon} ${d.risk_score || 0}/10
+            </span>
+          </td>
+          <td>${getStatusBadge(d.status)}</td>
+          <td style="color:#8b949e">${dateStr}</td>
+        </tr>`;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+    
+    if (typeof updateCharts === "function") {
+        updateCharts(data);
+    }
+
+  } catch(e) {
+    console.error("History error:", e);
+    showToast("❌ Error loading history");
+  }
+}
+
+async function loadDeployment(id) {
+  if (!id) return;
+  try {
+    const res = await apiFetch(`/api/v1/status/${id}`);
+    if (!res || !res.ok) {
+      showToast("❌ Could not load deployment details");
+      return;
+    }
+    const data = await res.json();
+    updateDashboard(data);
+    showToast(`📋 Loaded deployment #${id}`);
+
+    if (!["healed","blocked","failed"].includes(data.status)) {
+      startSSE(id); // ✅ Resume real-time tracking via SSE
+    }
+  } catch(e) {
+    console.error("Load deployment error:", e);
+  }
+}
+
+// ── Stats ─────────────────────────────────────────────────
+async function loadStats() {
+  console.log("Attempting to load stats...");
+  try {
+    const res = await apiFetch("/api/v1/stats");
+    if (!res || !res.ok) {
+      console.error("Stats fetch failed", res);
+      showToast("❌ Failed to load stats");
+      return;
+    }
+    const data = await res.json();
+    console.log("Stats data received:", data);
+
+    const updateText = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val !== undefined ? val : "—";
+    };
+
+    updateText("stat-total",   data.total_deployments);
+    updateText("stat-success", data.successful);
+    updateText("stat-blocked", data.blocked);
+    updateText("stat-risk",    (data.avg_risk_score || 0) + "/10");
+    
+  } catch(e) {
+    console.error("Stats error:", e);
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────
+function getRiskInfo(score) {
+  if (score >= 7) return { color:"red",    icon:"🔴", level:"high"   };
+  if (score >= 4) return { color:"orange", icon:"🟡", level:"medium" };
+  return              { color:"green",  icon:"🟢", level:"low"    };
+}
+
+function buildRiskBar(label, score) {
+  const risk = getRiskInfo(score);
+  return `
+    <div class="risk-bar-wrap">
+      <div class="risk-label">
+        <span>${label}</span>
+        <span>${risk.icon} ${score}/10</span>
+      </div>
+      <div class="risk-bar">
+        <div class="risk-fill ${risk.level}"
+             style="width:${score * 10}%"></div>
+      </div>
+    </div>`;
+}
+
+function getStatusBadge(status) {
+  const map = {
+    pending:      `<span class="badge gray">⏳ Pending</span>`,
+    running:      `<span class="badge blue">🔄 Running</span>`,
+    orchestrated: `<span class="badge blue">🧠 Planning</span>`,
+    built:        `<span class="badge blue">🏗️ Building</span>`,
+    deployed:     `<span class="badge green">🚢 Deployed</span>`,
+    healed:       `<span class="badge green">✅ Healed</span>`,
+    blocked:      `<span class="badge orange">🛡️ Blocked</span>`,
+    failed:       `<span class="badge red">❌ Failed</span>`,
+  };
+  return map[status] || `<span class="badge gray">${status}</span>`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  if (!t) return;
+  t.textContent  = msg;
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 3000);
+}
+
+// ── Charts Logic ──────────────────────────────────────────
+function initCharts() {
+  if (typeof Chart === "undefined") {
+    console.warn("Chart.js not loaded");
+    return;
+  }
+  
+  try {
+      const statusCtx = document.getElementById("statusChart");
+      if (statusCtx) {
+          statusChart = new Chart(statusCtx.getContext("2d"), {
+            type: "doughnut",
+            data: {
+              labels: ["Healed ✅", "Blocked 🛡️", "Failed ❌", "Running 🔄"],
+              datasets: [{
+                data: [0, 0, 0, 0],
+                backgroundColor: ["#3fb950", "#d29922", "#f85149", "#58a6ff"],
+                borderColor:     "#161b22",
+                borderWidth:     3
+              }]
+            },
+            options: {
+              responsive:  true,
+              plugins: {
+                legend: {
+                  position: "bottom",
+                  labels:   { color: "#8b949e", padding: 15 }
+                }
+              }
+            }
+          });
+      }
+
+      const riskCtx = document.getElementById("riskChart");
+      if (riskCtx) {
+          riskChart = new Chart(riskCtx.getContext("2d"), {
+            type: "line",
+            data: {
+              labels:   [],
+              datasets: [{
+                label:           "Risk Score",
+                data:            [],
+                borderColor:     "#f85149",
+                backgroundColor: "rgba(248,81,73,0.1)",
+                borderWidth:     2,
+                fill:            true,
+                tension:         0.4,
+                pointBackgroundColor: "#f85149",
+                pointRadius:          4
+              }]
+            },
+            options: {
+              responsive: true,
+              scales: {
+                x: {
+                  ticks:  { color: "#8b949e", maxTicksLimit: 6 },
+                  grid:   { color: "#21262d" }
+                },
+                y: {
+                  min:    0,
+                  max:    10,
+                  ticks:  { color: "#8b949e" },
+                  grid:   { color: "#21262d" }
+                }
+              },
+              plugins: {
+                legend: {
+                  labels: { color: "#8b949e" }
+                }
+              }
+            }
+          });
+      }
+  } catch(e) {
+      console.error("Chart init error:", e);
+  }
+}
+
+function updateCharts(historyData) {
+  if (!statusChart || !riskChart || !Array.isArray(historyData)) return;
+
+  try {
+      // Status chart
+      const healed  = historyData.filter(d => d.status === "healed").length;
+      const blocked = historyData.filter(d => d.status === "blocked").length;
+      const failed  = historyData.filter(d => d.status === "failed").length;
+      const running = historyData.filter(d =>
+        !["healed","blocked","failed"].includes(d.status)
+      ).length;
+
+      statusChart.data.datasets[0].data = [healed, blocked, failed, running];
+      statusChart.update();
+
+      // Risk trend chart
+      const recent  = historyData.slice(0, 10).reverse();
+      riskChart.data.labels   = recent.map((_, i) => `#${i+1}`);
+      riskChart.data.datasets[0].data = recent.map(d => d.risk_score || 0);
+      riskChart.update();
+  } catch(e) {
+      console.error("Chart update error:", e);
+  }
+}
+</script>
+
+</body>
+</html>

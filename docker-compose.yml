@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+
+  nginx:
+    image: nginx:alpine
+    container_name: devops-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+    restart: unless-stopped
+    networks:
+      - devops-network
+
+  app:
+    build:
+      context:    .
+      dockerfile: docker/Dockerfile
+    container_name: devops-app
+    expose:
+      - "8080"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+      - ~/.kube:/root/.kube:ro
+    restart: unless-stopped
+    networks:
+      - devops-network
+    healthcheck:
+      test:     ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout:  10s
+      retries:  3
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: devops-postgres
+    environment:
+      POSTGRES_USER:     devops
+      POSTGRES_PASSWORD: devops123
+      POSTGRES_DB:       devops_swarm
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - devops-network
+    healthcheck:
+      test:     ["CMD-SHELL", "pg_isready -U devops"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  redis:
+    image: redis:7-alpine
+    container_name: devops-redis
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - devops-network
+    healthcheck:
+      test:     ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: devops-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+    networks:
+      - devops-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: devops-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - devops-network
+
+volumes:
+  postgres-data:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  devops-network:
+    driver: bridge

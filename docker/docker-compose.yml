@@ -1,0 +1,146 @@
+version: '3.8'
+
+services:
+
+  # ── App ───────────────────────────────────────────────
+  app:
+    build:
+      context:    ..
+      dockerfile: docker/Dockerfile
+    container_name: devops-swarm-app
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+      - ~/.kube:/root/.kube:ro
+    restart: unless-stopped
+    networks:
+      - devops-network
+    healthcheck:
+      test:     ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout:  10s
+      retries:  3
+
+  # ── Celery Worker ─────────────────────────────────────
+  celery_worker:
+    build:
+      context:    ..
+      dockerfile: docker/Dockerfile
+    container_name: devops-swarm-worker
+    command: >
+      celery -A backend.celery_app worker
+      --loglevel=info
+      --queues=deployments
+      --concurrency=4
+    env_file: .env
+    depends_on:
+      - app
+      - redis
+    volumes:
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - devops-network
+
+  # ── Celery Flower ─────────────────────────────────────
+  flower:
+    build:
+      context:    ..
+      dockerfile: docker/Dockerfile
+    container_name: devops-swarm-flower
+    command: >
+      celery -A backend.celery_app flower
+      --port=5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      - celery_worker
+    env_file: .env
+    restart: unless-stopped
+    networks:
+      - devops-network
+
+  # ── PostgreSQL ────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: devops-swarm-postgres
+    environment:
+      POSTGRES_USER:     devops
+      POSTGRES_PASSWORD: devops123
+      POSTGRES_DB:       devops_swarm
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - devops-network
+    healthcheck:
+      test:     ["CMD-SHELL", "pg_isready -U devops"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  # ── Redis ─────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: devops-swarm-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - devops-network
+    healthcheck:
+      test:     ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  # ── Prometheus ────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: devops-swarm-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+    networks:
+      - devops-network
+
+  # ── Grafana ───────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: devops-swarm-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - devops-network
+
+volumes:
+  postgres-data:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  devops-network:
+    driver: bridge

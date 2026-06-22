@@ -1,0 +1,34 @@
+{
+  "service_name": "payment-service",
+  "repo_url": "https://github.com/example/payment-service",
+  "status": "healed",
+  "agents": {
+    "orchestrator": "complete",
+    "builder": "complete",
+    "blast_radius": "complete",
+    "autohealer": "complete"
+  },
+  "risk_score": 2,
+  "is_safe": true,
+  "affected_services": [],
+  "risk_analysis": "1. Risk Score: 2/10\n2. Affected Services: paymentservice\n3. Risk Reasons: The paymentservice is not critical, and the changes made are internal to the service, with no external dependencies or services calling this service. However, the updated payment processing logic and database connection pool may introduce minor risks.\n4. Recommendation: SAFE TO DEPLOY\n5. Safer Alternative: Consider performing a canary deployment or A/B testing for the paymentservice to monitor the updated payment processing logic and database connection pool before fully deploying the changes.",
+  "healing_report": "1. Root Cause: The payment-service is not found and has a CrashLoopBackOff error, indicating that the deployment is failing repeatedly, likely due to a configuration issue or an error in the container startup process.\n\n2. Affected Services: The payment-service is directly impacted, and any services that depend on it may also be affected, such as the order-service, user-service, or any other service that relies on payment processing.\n\n3. Healing Actions Taken:\n       - Action 1: `kubectl create deployment payment-service --image=payment-service-image` to recreate the deployment with the correct image.\n       - Action 2: `kubectl scale deployment payment-service --replicas=1` to ensure the deployment has at least one replica running.\n       - Action 3: `kubectl rollout restart deployment payment-service` to restart the deployment and apply any pending changes.\n\n4. Prevention: To prevent similar issues in the future, implement a liveness probe and a readiness probe in the payment-service deployment to detect and restart the container if it becomes unresponsive or fails to start. Regularly review deployment configurations and container logs to catch potential issues before they cause a CrashLoopBackOff error.\n\n5. Status: {'exists': True, 'replicas': 1, 'ready': 1, 'status': 'running'}",
+  "generated_files": [
+    "Dockerfile",
+    "k8s-manifest.yaml",
+    "pipeline.yml"
+  ],
+  "logs": [
+    "\u2705 Orchestrator: Deployment plan created",
+    "\u2705 Builder: Configs generated and saved",
+    "\u26a0\ufe0f Blast Radius: Risk Score 2/10 detected",
+    "\u26a0\ufe0f Affected: ",
+    "\u2705 Deployment: APPROVED and deployed",
+    "\u274c FAILURE: OOMKilled on payment-service pod",
+    "\u274c FAILURE: order-service connection refused",
+    "\u2705 AutoHealer: Pod restarted",
+    "\u2705 AutoHealer: Memory limit updated",
+    "\u2705 AutoHealer: Circuit breaker enabled",
+    "\u2705 All services healthy \u2014 pipeline complete"
+  ]
+}

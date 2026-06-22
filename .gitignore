@@ -1,0 +1,40 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE Configs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Sensitive Files
+.env
+*.pem
+*.key
+devops-swarm-key.pem
+
+# Database and Logs
+database/*.db
+database/devops.db
+database/devops_swarm.db
+database/test.db
+logs/
+*.log
+
+# Project Outputs and Cache
+outputs/
+.pytest_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
