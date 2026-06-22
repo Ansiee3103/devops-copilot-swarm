@@ -97,17 +97,24 @@ jobs:
         run: |
           ECR_URI=${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}
           TAG=${{ steps.vars.outputs.tag }}
-
+          
           echo "🏗️ Building image: $ECR_URI:$TAG"
+          
+          # Debug: Check if Dockerfile exists
+          ls -la docker/ || echo "❌ docker/ directory not found"
+          cat docker/Dockerfile || echo "❌ Dockerfile not found"
+          
           docker build -f docker/Dockerfile \
+            --no-cache \
             -t $ECR_URI:$TAG \
             -t $ECR_URI:latest \
+            --progress=plain \
             .
-
+          
           echo "⬆️ Pushing to ECR..."
           docker push $ECR_URI:$TAG
           docker push $ECR_URI:latest
-
+          
           echo "✅ Pushed: $ECR_URI:$TAG"
 
   # ── Job 4: Deploy to EC2 ──────────────────────────────
