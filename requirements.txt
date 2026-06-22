@@ -39,3 +39,6 @@ psycopg2-binary==2.9.9
 
 # Monitoring
 prometheus-fastapi-instrumentator==6.1.0
+
+pytest>=7.0.0
+pytest-cov>=4.0.0
