@@ -113,12 +113,15 @@ jobs:
           docker push $REGISTRY/$REPOSITORY:latest
 
           echo "✅ Pushed: $REGISTRY/$REPOSITORY:$TAG"
+
   # ── Job 4: Deploy to EC2 ──────────────────────────────
   deploy:
     name: 🚀 Deploy to EC2
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
 
     steps:
       - name: Deploy via SSH
@@ -181,13 +184,18 @@ jobs:
         if: always()
         with:
           script: |
+            const shortSha = context.sha.substring(0, 7);
+            const deployUrl = 'https://13.126.249.86.nip.io/dashboard/index.html';
             const status = '${{ job.status }}';
-            const emoji  = status === 'success' ? '✅' : '❌';
-            const sha    = context.sha.substring(0, 8);
 
-            github.rest.repos.createCommitComment({
-              owner:  context.repo.owner,
-              repo:   context.repo.repo,
+            const body = status === 'success'
+              ? `✅ Deployment \`${shortSha}\` success\n\n🌐 ${deployUrl}`
+              : `❌ Deployment \`${shortSha}\` failed\n\n🌐 ${deployUrl}`;
+
+            await github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
               commit_sha: context.sha,
-              body: `${emoji} Deployment \`${sha}\` ${status}\n\n🌐 https://13.126.249.86.nip.io/dashboard/index.html`
+              body: body
             });
+            
