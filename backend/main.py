@@ -24,6 +24,8 @@ from backend.api.v1.auth        import router as auth_router
 from backend.api.v1.cluster     import router as cluster_router
 from backend.api.v1.alerts      import router as alerts_router
 from backend.api.v1.system      import router as system_router
+from backend.api.v1.saas  import router as saas_router
+from backend.api.v1.admin import router as admin_router
 
 logger  = get_logger("main")
 limiter = Limiter(key_func=get_remote_address)
@@ -87,6 +89,8 @@ app.include_router(auth_router)
 app.include_router(deploy_router)
 app.include_router(cluster_router)
 app.include_router(alerts_router)
+app.include_router(saas_router)
+app.include_router(admin_router)
 
 # ── Metrics ───────────────────────────────────────────────
 if settings.METRICS_ENABLED:

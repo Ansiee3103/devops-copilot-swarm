@@ -7,10 +7,11 @@ on:
     branches: [main]
 
 env:
-  AWS_REGION: ap-south-1
-  ECR_REPO: devops-copilot-swarm
-  ACCOUNT_ID: 006600132909
-  EC2_USER: ubuntu
+  AWS_REGION:  ap-south-1
+  ECR_REPO:    devops-copilot-swarm
+  ACCOUNT_ID:  006600132909
+  EC2_USER:    ubuntu
+  APP_URL:     https://13.126.249.86.nip.io
 
 jobs:
   # ── Job 1: Tests ──────────────────────────────────────
@@ -120,6 +121,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: ${{ env.APP_URL }}/dashboard/index.html
     permissions:
       contents: write
 
@@ -166,8 +170,7 @@ jobs:
           sleep 20
 
           for i in {1..5}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-              https://13.126.249.86.nip.io/health)
+            STATUS=$(curl -sk -o /dev/null -w "%{http_code}" ${{ env.APP_URL }}/health)
             if [ "$STATUS" = "200" ]; then
               echo "✅ Health check passed!"
               exit 0
@@ -176,7 +179,7 @@ jobs:
             sleep 10
           done
 
-          echo "❌ Health check failed after 5 attempts"
+          echo "❌ Health check failed!"
           exit 1
 
       - name: Comment on commit
@@ -198,4 +201,19 @@ jobs:
               commit_sha: context.sha,
               body: body
             });
-            
+
+      - name: Notify Slack
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          SHA="${GITHUB_SHA::8}"
+
+          if [ "$STATUS" = "success" ]; then
+            MSG="✅ *DevOps Copilot Swarm* deployed!\n• Commit: \`$SHA\`\n• URL: ${{ env.APP_URL }}/dashboard/index.html"
+          else
+            MSG="❌ *DevOps Copilot Swarm* deploy FAILED!\n• Commit: \`$SHA\`\n• Logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          fi
+
+          curl -s -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H 'Content-Type: application/json' \
+            -d "{\"text\": \"$MSG\"}"

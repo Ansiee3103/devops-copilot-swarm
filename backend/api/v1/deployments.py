@@ -8,6 +8,7 @@ from backend.repositories.deployment_repo import DeploymentRepository
 from backend.services.deployment_service import DeploymentService
 from backend.models.schemas import DeployRequest, DeploymentResponse, DeploymentSummary, StatsResponse
 from backend.validators import VALID_SERVICES, validate_deploy_request
+from backend.core.cache_manager import cached, invalidate_cache
 
 router = APIRouter(prefix="/api/v1", tags=["Deployments"])
 
@@ -33,26 +34,37 @@ def deploy(
         changes=req.changes,
         user_id=current_user.get("id"),
     )
+
+    # ✅ Invalidate stats and history cache after deploy
+    invalidate_cache("stats")
+    invalidate_cache("history")
+
     return result
 
 @router.get("/history")
+@cached(ttl=30, prefix="history")  # ✅ Cache for 30 seconds
 def list_history(
+    limit: int = 20,
     db = Depends(get_db),
     current_user: dict = Depends(require_permission("read")),
 ):
     repo = DeploymentRepository(db)
-    deps = repo.get_all()
-    return [DeploymentSummary(
-        id=dep.id,
-        service_name=dep.service_name,
-        language=dep.language,
-        status=dep.status,
-        risk_score=dep.risk_score or 0.0,
-        is_critical=dep.is_critical or False,
-        created_at=str(dep.created_at),
-    ) for dep in deps]
+    deps = repo.get_all(limit=limit)
+    return [
+        {
+            "id":           dep.id,
+            "service_name": dep.service_name,
+            "language":     dep.language,
+            "status":       dep.status,
+            "risk_score":   dep.risk_score or 0.0,
+            "is_critical":  dep.is_critical or False,
+            "created_at":   str(dep.created_at),
+        }
+        for dep in deps
+    ]
 
 @router.get("/stats")
+@cached(ttl=60, prefix="stats")   # ✅ Cache for 60 seconds
 def get_stats(
     db = Depends(get_db),
     current_user: dict = Depends(require_permission("read")),
