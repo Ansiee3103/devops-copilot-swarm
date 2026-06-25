@@ -1,7 +1,7 @@
 import json
 import hashlib
 import functools
-from typing import Any, Optional, Callable
+from typing import Callable
 from backend.core.logger import get_logger
 
 logger = get_logger("cache")
@@ -20,17 +20,27 @@ def get_redis():
     except:
         return None
 
-def cache_key(*args, **kwargs) -> str:
-    content = json.dumps({"args": args, "kwargs": kwargs}, sort_keys=True)
-    return f"cache:{hashlib.md5(content.encode()).hexdigest()}"
+def _safe_serialize(obj) -> str:
+    """Serialize only JSON-safe types — skip DB sessions etc."""
+    safe = {}
+    for k, v in obj.items():
+        try:
+            json.dumps(v)   # test if serializable
+            safe[k] = v
+        except (TypeError, ValueError):
+            pass            # ✅ skip non-serializable (Session, etc.)
+    return json.dumps(safe, sort_keys=True)
 
 def cached(ttl: int = 300, prefix: str = ""):
-    """Cache decorator for any function"""
+    """Cache decorator — safely ignores non-serializable args"""
     def decorator(func: Callable):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             r   = get_redis()
-            key = f"{prefix}:{func.__name__}:{cache_key(*args, **kwargs)}"
+
+            # ✅ Build cache key from only serializable kwargs
+            key_content = _safe_serialize(kwargs)
+            key = f"{prefix}:{func.__name__}:{hashlib.md5(key_content.encode()).hexdigest()}"
 
             if r:
                 try:
@@ -47,15 +57,15 @@ def cached(ttl: int = 300, prefix: str = ""):
                 try:
                     r.setex(key, ttl, json.dumps(result))
                     logger.debug(f"Cache SET: {key} (ttl={ttl}s)")
-                except:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Cache set failed: {e}")
 
             return result
         return wrapper
     return decorator
 
 def invalidate_cache(pattern: str):
-    """Invalidate all cache keys matching pattern"""
+    """Invalidate cache keys matching pattern"""
     r = get_redis()
     if not r:
         return
@@ -63,6 +73,6 @@ def invalidate_cache(pattern: str):
         keys = r.keys(f"*{pattern}*")
         if keys:
             r.delete(*keys)
-            logger.info(f"Invalidated {len(keys)} cache keys: {pattern}")
+            logger.info(f"Invalidated {len(keys)} keys: {pattern}")
     except:
         pass
