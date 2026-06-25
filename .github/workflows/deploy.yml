@@ -90,25 +90,29 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and push
-        run: |
-          ECR_URI=${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}
-          TAG=${{ steps.vars.outputs.tag }}
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
 
-          echo "🏗️ Building image: $ECR_URI:$TAG"
+      - name: Build and push
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ env.ECR_REPO }}
+          TAG: ${{ steps.vars.outputs.tag }}
+        run: |
+          echo "🏗️ Building image: $REGISTRY/$REPOSITORY:$TAG"
           docker build -f docker/Dockerfile \
-            -t $ECR_URI:$TAG \
-            -t $ECR_URI:latest \
+            -t $REGISTRY/$REPOSITORY:$TAG \
+            -t $REGISTRY/$REPOSITORY:latest \
             .
 
           echo "⬆️ Pushing to ECR..."
-          docker push $ECR_URI:$TAG
-          docker push $ECR_URI:latest
+          docker push $REGISTRY/$REPOSITORY:$TAG
+          docker push $REGISTRY/$REPOSITORY:latest
 
-          echo "✅ Pushed: $ECR_URI:$TAG"
-
+          echo "✅ Pushed: $REGISTRY/$REPOSITORY:$TAG"
   # ── Job 4: Deploy to EC2 ──────────────────────────────
   deploy:
     name: 🚀 Deploy to EC2
