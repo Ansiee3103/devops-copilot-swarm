@@ -120,7 +120,7 @@ def get_usage(
     import calendar
 
     now   = datetime.now(IST)
-    start = now.replace(day=1, hour=0, minute=0, second=0)
+    start = now.replace(day=1, hour=0, minute=0, second=0).replace(tzinfo=None)
 
     monthly_count = db.query(func.count(Deployment.id)).filter(
         Deployment.created_at >= start

@@ -56,7 +56,7 @@ class AnomalyDetector:
                       "medium"   if z_score > 1.5 else "low"
 
         return {
-            "is_anomaly":     is_anomaly,
+            "is_anomaly":     bool(is_anomaly),
             "z_score":        round(float(z_score), 2),
             "current_score":  current_score,
             "historical_avg": round(float(mean), 2),
@@ -86,10 +86,10 @@ class AnomalyDetector:
         is_anomaly = is_spike or abs(z_score) > self.thresholds["z_score"]
 
         return {
-            "is_anomaly":     is_anomaly,
+            "is_anomaly":     bool(is_anomaly),
             "current_count":  current_count,
             "avg_per_hour":   round(float(mean), 1),
-            "is_spike":       is_spike,
+            "is_spike":       bool(is_spike),
             "z_score":        round(float(z_score), 2),
             "reason":         f"Deployment spike: {current_count} in 1 hour "
                               f"(avg: {mean:.1f})"
@@ -174,8 +174,8 @@ class AnomalyDetector:
         recent_risks    = [d.risk_score for d in deps if d.risk_score]
         recent_statuses = [d.status for d in deps]
 
-        # Count deploys in last hour
-        one_hour_ago = now - timedelta(hours=1)
+        # Count deploys in last hour (strip tzinfo for comparing with offset-naive column)
+        one_hour_ago = (now - timedelta(hours=1)).replace(tzinfo=None)
         hourly_count = db.query(func.count(Deployment.id)).filter(
             Deployment.created_at >= one_hour_ago
         ).scalar()
