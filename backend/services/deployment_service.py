@@ -93,6 +93,44 @@ class DeploymentService:
             repo.add_log(deployment_id, f"⚠️ Affected: {', '.join(affected) if affected else 'None'}")
             print(f"✅ Blast Radius done: {risk_output['risk_score']}/10")
 
+            # After blast_radius_agent runs — add this:
+
+            # ── AIOps: Anomaly Detection ──────────────────────────
+            from backend.ml.anomaly_detector import anomaly_detector
+            from backend.ml.confidence_scorer import confidence_scorer
+
+            anomaly = anomaly_detector.full_analysis(
+                db, service_name, risk_output["risk_score"]
+            )
+            repo.add_log(
+                deployment_id,
+                f"🔍 AIOps: {anomaly['overall_status'].upper()} — "
+                f"{anomaly['recommendation']}"
+            )
+
+            # ── Confidence Score ──────────────────────────────────
+            confidence = confidence_scorer.calculate(
+                risk_score      = risk_output["risk_score"],
+                changes         = changes,
+                recent_statuses = [],
+                service_name    = service_name
+            )
+            repo.add_log(
+                deployment_id,
+                f"🎯 Confidence Score: {confidence['overall_score']}/100 "
+                f"— {confidence['decision']}"
+            )
+
+            # ── Optimal Deployment Window ─────────────────────────
+            from backend.ml.predictor import traffic_predictor
+            window = traffic_predictor.predict_load(hours_ahead=0)
+            if not window["deploy_recommended"]:
+                repo.add_log(
+                    deployment_id,
+                    f"⚠️ Traffic: {window['traffic_level'].upper()} "
+                    f"— {window['reason']}"
+                )
+
             # ── Phase 4: Deploy or Block ───────────────────
             if risk_output["is_safe"]:
                 repo.add_log(deployment_id, "✅ APPROVED — deploying to Kubernetes...")

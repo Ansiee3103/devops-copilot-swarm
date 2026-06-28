@@ -121,6 +121,11 @@ class RiskModel:
         if os.path.exists(MODEL_PATH):
             try:
                 self.model   = joblib.load(MODEL_PATH)
+                # Fix sklearn version mismatch where criterion or loss might be set to 'deprecated'
+                if hasattr(self.model, "criterion") and self.model.criterion == "deprecated":
+                    self.model.criterion = "friedman_mse"
+                if hasattr(self.model, "loss") and self.model.loss == "deprecated":
+                    self.model.loss = "log_loss"
                 self.trained = True
                 logger.info("✅ Risk model loaded from disk")
             except:
@@ -231,7 +236,19 @@ class RiskModel:
             X, y, test_size=0.2, random_state=42
         )
 
-        self.model.fit(X_train, y_train)
+        try:
+            self.model.fit(X_train, y_train)
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to fit loaded model: {e}. Reinitializing model...")
+            self._init_model()
+            # If the initialized model also has deprecated attributes set from previous class defaults,
+            # we make sure they are cleaned as well:
+            if hasattr(self.model, "criterion") and self.model.criterion == "deprecated":
+                self.model.criterion = "friedman_mse"
+            if hasattr(self.model, "loss") and self.model.loss == "deprecated":
+                self.model.loss = "log_loss"
+            self.model.fit(X_train, y_train)
+
         self.trained = True
 
         # Save model

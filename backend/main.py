@@ -26,6 +26,7 @@ from backend.api.v1.alerts      import router as alerts_router
 from backend.api.v1.system      import router as system_router
 from backend.api.v1.saas  import router as saas_router
 from backend.api.v1.admin import router as admin_router
+from backend.api.v1.aiops import router as aiops_router
 
 logger  = get_logger("main")
 limiter = Limiter(key_func=get_remote_address)
@@ -91,6 +92,7 @@ app.include_router(cluster_router)
 app.include_router(alerts_router)
 app.include_router(saas_router)
 app.include_router(admin_router)
+app.include_router(aiops_router)
 
 # ── Metrics ───────────────────────────────────────────────
 if settings.METRICS_ENABLED:
