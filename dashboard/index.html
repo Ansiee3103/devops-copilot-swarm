@@ -1,1261 +1,2616 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="theme-color" content="#0d1117"/>
-  <link rel="manifest" href="/dashboard/manifest.json"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DevOps Copilot Swarm</title>
-  <!-- Chart.js -->
+  <link rel="manifest" href="/dashboard/manifest.json" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
+    /* ── Reset & Variables ────────────────────────────── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #0f1629;
+      --bg-card: #131929;
+      --bg-card-hover: #1a2235;
+      --border: #1e2d45;
+      --border-bright: #2a3f5f;
+      --text-primary: #e2e8f0;
+      --text-secondary: #8892a4;
+      --text-muted: #4a5568;
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-yellow: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-purple: #8b5cf6;
+      --glow-blue: 0 0 20px rgba(59, 130, 246, 0.3);
+      --glow-green: 0 0 20px rgba(16, 185, 129, 0.3);
+      --glow-red: 0 0 20px rgba(239, 68, 68, 0.3);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --font: 'Inter', system-ui, -apple-system, sans-serif;
+    }
 
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #0d1117;
-      color: #e6edf3;
-      padding: 20px;
+      font-family: var(--font);
+      background: var(--bg-primary);
+      color: var(--text-primary);
       min-height: 100vh;
+      overflow-x: hidden;
     }
 
-    h1 {
-      text-align: center;
-      font-size: 28px;
-      color: #58a6ff;
-      margin-bottom: 5px;
+    /* ── Scrollbar ───────────────────────────────────── */
+    ::-webkit-scrollbar {
+      width: 6px;
     }
 
-    .subtitle {
-      text-align: center;
-      color: #8b949e;
-      margin-bottom: 20px;
-      font-size: 14px;
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
     }
 
-    /* ── Login ── */
-    #login-overlay {
-      position: fixed; top:0; left:0;
-      width:100%; height:100%;
-      background: #0d1117;
-      z-index: 9999;
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-bright);
+      border-radius: 3px;
+    }
+
+    /* ── Login Screen ────────────────────────────────── */
+    #login-screen {
       display: flex;
       align-items: center;
       justify-content: center;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 50% 0%, #1a2a4a 0%, var(--bg-primary) 70%);
     }
 
-    .login-box {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 16px;
-      padding: 40px;
-      width: 380px;
+    .login-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px;
+      width: 420px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), var(--glow-blue);
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-logo .icon {
+      font-size: 56px;
+      display: block;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.6));
+    }
+
+    .login-logo h1 {
+      font-size: 22px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .login-logo p {
+      color: var(--text-secondary);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: var(--glow-blue);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    #login-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: var(--radius-sm);
+      color: var(--accent-red);
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    /* ── App Layout ──────────────────────────────────── */
+    #app-screen {
+      display: none;
+    }
+
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 240px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      padding: 20px 0;
+    }
+
+    .sidebar-logo {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+
+    .sidebar-logo .logo-icon {
+      font-size: 28px;
+    }
+
+    .sidebar-logo .logo-text {
+      font-size: 16px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sidebar-logo .logo-version {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .nav-section {
+      padding: 0 12px;
+      margin-bottom: 8px;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 8px 8px 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+      border: 1px solid transparent;
+      margin-bottom: 2px;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--accent-blue);
+      border-color: rgba(59, 130, 246, 0.2);
+    }
+
+    .nav-item .nav-icon {
+      font-size: 16px;
+      width: 20px;
       text-align: center;
     }
 
-    .login-box input {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 12px;
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      color: #e6edf3;
-      font-size: 14px;
-    }
-
-    .login-box input:focus {
-      outline: none;
-      border-color: #58a6ff;
-    }
-
-    .login-btn {
-      width: 100%;
-      padding: 12px;
-      background: #1f6feb;
+    .nav-item .nav-badge {
+      margin-left: auto;
+      background: var(--accent-red);
       color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 15px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background 0.2s;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 10px;
+      min-width: 18px;
+      text-align: center;
     }
 
-    .login-btn:hover { background: #388bfd; }
-
-    /* ── User Bar ── */
-    #user-bar {
-      display: none;
-      text-align: right;
-      max-width: 1200px;
-      margin: 0 auto 10px;
-      font-size: 13px;
-      color: #8b949e;
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 12px;
+      border-top: 1px solid var(--border);
     }
 
-    /* ── Deploy Form ── */
-    .deploy-form {
-      max-width: 1200px;
-      margin: 0 auto 20px;
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      padding: 20px;
+    .user-info {
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
       align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.15s;
     }
 
-    .deploy-form select,
-    .deploy-form input {
-      flex: 1;
-      padding: 10px 14px;
-      border-radius: 8px;
-      background: #0d1117;
-      border: 1px solid #30363d;
-      color: #e6edf3;
+    .user-info:hover {
+      background: var(--bg-card);
+    }
+
+    .user-avatar {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 14px;
-      min-width: 200px;
+      font-weight: 700;
     }
 
-    .deploy-form select:focus,
-    .deploy-form input:focus {
+    .user-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .user-role {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* ── Main Content ────────────────────────────────── */
+    .main {
+      margin-left: 240px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      height: 60px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .topbar-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .topbar-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
+    }
+
+    .time-badge {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: monospace;
+    }
+
+    /* ── Page Content ────────────────────────────────── */
+    .page-content {
+      padding: 24px;
+      flex: 1;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    /* ── Stats Grid ──────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent-color, var(--accent-blue));
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-bright);
+      transform: translateY(-2px);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-change {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .stat-change.up {
+      color: var(--accent-green);
+    }
+
+    .stat-change.down {
+      color: var(--accent-red);
+    }
+
+    .stat-icon {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      font-size: 28px;
+      opacity: 0.15;
+    }
+
+    /* ── Cards ───────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title .title-icon {
+      font-size: 16px;
+    }
+
+    /* ── Grid Layouts ────────────────────────────────── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+    }
+
+    /* ── Deploy Form ─────────────────────────────────── */
+    .deploy-form {
+      display: grid;
+      grid-template-columns: 1fr 2fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    .input-group select,
+    .input-group input,
+    .input-group textarea {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 13px;
       outline: none;
-      border-color: #58a6ff;
+      transition: border-color 0.2s;
+      font-family: var(--font);
+    }
+
+    .input-group select:focus,
+    .input-group input:focus,
+    .input-group textarea:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
     .btn {
       padding: 10px 20px;
       border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-
-    .btn-primary  { background:#1f6feb; color:white; }
-    .btn-primary:hover { background:#388bfd; }
-    .btn-primary:disabled { background:#21262d; cursor:not-allowed; }
-    .btn-secondary { background:#21262d; color:#e6edf3; border:1px solid #30363d; }
-    .btn-secondary:hover { background:#2d333b; }
-
-    /* ── Top Bar ── */
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      max-width: 1200px;
-      margin: 0 auto 20px;
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      padding: 15px 25px;
-    }
-
-    .top-bar .service { font-size: 18px; font-weight: bold; }
-    .top-bar .meta    { font-size: 12px; color: #8b949e; margin-top: 3px; }
-
-    /* ── Stats Bar ── */
-    .stats-bar {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 15px;
-      max-width: 1200px;
-      margin: 0 auto 20px;
-    }
-
-    .stat-card {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      padding: 15px 20px;
-      text-align: center;
-    }
-
-    .stat-card .stat-value {
-      font-size: 28px;
-      font-weight: bold;
-      color: #58a6ff;
-    }
-
-    .stat-card .stat-label {
-      font-size: 12px;
-      color: #8b949e;
-      margin-top: 4px;
-    }
-
-    /* ── Grid ── */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
-      max-width: 1200px;
-      margin: auto;
-    }
-
-    .card {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      padding: 20px;
-    }
-
-    .card h2 {
-      font-size: 15px;
-      margin-bottom: 15px;
-      color: #e6edf3;
-    }
-
-    .full-width { grid-column: span 2; }
-
-    /* ── Status Row ── */
-    .status-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid #21262d;
-      font-size: 14px;
-    }
-
-    .status-row:last-child { border-bottom: none; }
-
-    /* ── Badges ── */
-    .badge {
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: bold;
-      white-space: nowrap;
-    }
-
-    .badge.green  { background:#1a3a2a; color:#3fb950; }
-    .badge.red    { background:#3a1a1a; color:#f85149; }
-    .badge.yellow { background:#3a2e1a; color:#d29922; }
-    .badge.blue   { background:#1a2a3a; color:#58a6ff; }
-    .badge.gray   { background:#21262d; color:#8b949e; }
-    .badge.orange { background:#3a2a1a; color:#e3b341; }
-
-    /* ── Risk Bars ── */
-    .risk-bar-wrap { margin-top: 12px; }
-
-    .risk-label {
-      display: flex;
-      justify-content: space-between;
+      border-radius: var(--radius-sm);
       font-size: 13px;
-      margin-bottom: 6px;
-      color: #8b949e;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .risk-bar {
-      height: 10px;
-      border-radius: 5px;
-      background: #21262d;
+    .btn-deploy {
+      background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+      color: white;
+      padding: 10px 28px;
+      box-shadow: var(--glow-blue);
+    }
+
+    .btn-deploy:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-deploy:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--border-bright);
+      color: var(--text-primary);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--accent-red);
+    }
+
+    /* ── Pipeline Steps ──────────────────────────────── */
+    .pipeline {
+      display: flex;
+      gap: 0;
+      margin: 20px 0;
+      position: relative;
+    }
+
+    .pipeline::before {
+      content: '';
+      position: absolute;
+      top: 24px;
+      left: 40px;
+      right: 40px;
+      height: 2px;
+      background: var(--border);
+      z-index: 0;
+    }
+
+    .pipeline-step {
+      flex: 1;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin: 0 auto 10px;
+      border: 2px solid var(--border);
+      background: var(--bg-card);
+      transition: all 0.4s;
+    }
+
+    .step-icon.pending {
+      border-color: var(--border);
+    }
+
+    .step-icon.running {
+      border-color: var(--accent-blue);
+      background: rgba(59, 130, 246, 0.1);
+      animation: spin-glow 1.5s infinite;
+    }
+
+    .step-icon.done {
+      border-color: var(--accent-green);
+      background: rgba(16, 185, 129, 0.1);
+      box-shadow: var(--glow-green);
+    }
+
+    .step-icon.blocked {
+      border-color: var(--accent-red);
+      background: rgba(239, 68, 68, 0.1);
+      box-shadow: var(--glow-red);
+    }
+
+    @keyframes spin-glow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 rgba(59, 130, 246, 0);
+      }
+
+      50% {
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+      }
+    }
+
+    .step-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Risk Meter ──────────────────────────────────── */
+    .risk-meter {
+      position: relative;
+      height: 8px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
       overflow: hidden;
-      margin-bottom: 4px;
+      margin: 8px 0;
     }
 
     .risk-fill {
       height: 100%;
-      border-radius: 5px;
-      transition: width 1.2s ease;
-    }
-
-    .risk-fill.low    { background: #3fb950; }
-    .risk-fill.medium { background: #d29922; }
-    .risk-fill.high   { background: #f85149; }
-
-    /* ── Heal Actions ── */
-    .heal-action {
-      background: #0d1117;
-      border-left: 3px solid #3fb950;
       border-radius: 4px;
-      padding: 8px 12px;
-      margin: 6px 0;
-      font-size: 13px;
-      color: #8b949e;
-      line-height: 1.6;
+      transition: width 1s ease, background 0.5s;
     }
 
-    .heal-action span { color: #3fb950; font-weight: bold; }
-
-    /* ── Log Box ── */
-    .log-box {
-      background: #0d1117;
-      border: 1px solid #21262d;
-      border-radius: 8px;
-      padding: 12px;
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      color: #8b949e;
-      max-height: 280px;
+    /* ── Log Viewer ──────────────────────────────────── */
+    .log-viewer {
+      background: #060a14;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      height: 280px;
       overflow-y: auto;
-      line-height: 2;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      line-height: 1.7;
     }
 
-    .log-ok   { color: #3fb950; }
-    .log-err  { color: #f85149; }
-    .log-warn { color: #d29922; }
-    .log-info { color: #58a6ff; }
+    .log-line {
+      margin-bottom: 2px;
+      padding: 2px 0;
+    }
 
-    /* ── History Table ── */
-    .history-table {
+    .log-ok {
+      color: #34d399;
+    }
+
+    .log-err {
+      color: #f87171;
+    }
+
+    .log-warn {
+      color: #fbbf24;
+    }
+
+    .log-info {
+      color: #60a5fa;
+    }
+
+    .log-dim {
+      color: #475569;
+    }
+
+    /* ── History Table ───────────────────────────────── */
+    .table {
       width: 100%;
       border-collapse: collapse;
+    }
+
+    .table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(30, 45, 69, 0.5);
       font-size: 13px;
     }
 
-    .history-table th {
-      text-align: left;
-      padding: 10px 12px;
-      color: #8b949e;
-      border-bottom: 2px solid #21262d;
+    .table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* ── Badges ──────────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
       font-weight: 600;
     }
 
-    .history-table td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #21262d;
+    .badge-green {
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
-    .history-table tr:last-child td { border-bottom: none; }
-    .history-table tr:hover td {
-      background: #1c2128;
-      cursor: pointer;
+    .badge-red {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--accent-red);
+      border: 1px solid rgba(239, 68, 68, 0.2);
     }
 
-    /* ── Toast ── */
-    #toast {
+    .badge-yellow {
+      background: rgba(245, 158, 11, 0.12);
+      color: var(--accent-yellow);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .badge-blue {
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--accent-blue);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .badge-purple {
+      background: rgba(139, 92, 246, 0.12);
+      color: var(--accent-purple);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+    }
+
+    .badge-gray {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--text-secondary);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    /* ── Toast ───────────────────────────────────────── */
+    #toast-container {
       position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #1f6feb;
-      color: white;
-      padding: 12px 20px;
-      border-radius: 10px;
-      font-size: 14px;
-      display: none;
+      bottom: 24px;
+      right: 24px;
       z-index: 1000;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      font-size: 13px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       animation: slideIn 0.3s ease;
+      max-width: 320px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     @keyframes slideIn {
-      from { transform: translateY(20px); opacity: 0; }
-      to   { transform: translateY(0);    opacity: 1; }
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
     }
 
-    /* ── Scrollbar ── */
-    ::-webkit-scrollbar       { width: 6px; }
-    ::-webkit-scrollbar-track { background: #0d1117; }
-    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+    /* ── LLM Status ──────────────────────────────────── */
+    .llm-indicators {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
 
-    /* Mobile responsive */
+    .llm-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+    }
+
+    .llm-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .llm-dot.on {
+      background: var(--accent-green);
+      box-shadow: 0 0 6px var(--accent-green);
+    }
+
+    .llm-dot.off {
+      background: var(--text-muted);
+    }
+
+    /* ── Confidence Score ────────────────────────────── */
+    .confidence-ring {
+      width: 120px;
+      height: 120px;
+      position: relative;
+      margin: 0 auto;
+    }
+
+    .confidence-ring svg {
+      transform: rotate(-90deg);
+    }
+
+    .ring-bg {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 8;
+    }
+
+    .ring-fill {
+      fill: none;
+      stroke-width: 8;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1.5s ease, stroke 0.5s;
+    }
+
+    .ring-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ring-score {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .ring-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Responsive ──────────────────────────────────── */
+    @media (max-width: 1200px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .grid-3 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
     @media (max-width: 768px) {
-        .grid {
-            grid-template-columns: 1fr !important;
-        }
-        .stats-bar {
-            grid-template-columns: repeat(2, 1fr) !important;
-        }
-        .deploy-form {
-            flex-direction: column;
-        }
-        .deploy-form select,
-        .deploy-form input {
-            width: 100% !important;
-        }
-        .full-width {
-            grid-column: span 1 !important;
-        }
-        h1 { font-size: 20px; }
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .main {
+        margin-left: 0;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      .deploy-form {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
+
 <body>
 
-<!-- ── Login Overlay ───────────────────────────────────── -->
-<div id="login-overlay">
-  <div class="login-box">
-    <div style="font-size:48px; margin-bottom:12px">🚀</div>
-    <h2 style="color:#58a6ff; margin-bottom:6px; font-size:22px">
-      DevOps Copilot Swarm
-    </h2>
-    <p style="color:#8b949e; font-size:13px; margin-bottom:28px">
-      Risk-Aware Deployment & Self-Healing Control Plane
-    </p>
-
-    <input id="login-username" type="text"
-           placeholder="Username" autocomplete="username"/>
-    <input id="login-password" type="password"
-           placeholder="Password" autocomplete="current-password"
-           onkeypress="if(event.key==='Enter') doLogin()"/>
-
-    <button class="login-btn" onclick="doLogin()">Sign In</button>
-
-    <div id="login-error"
-         style="color:#f85149; font-size:13px; margin-top:12px; display:none">
-      ❌ Invalid username or password
-    </div>
-
-    <p style="color:#8b949e; font-size:12px; margin-top:20px">
-      Default credentials: <strong>admin</strong> / <strong>admin123</strong>
-    </p>
-  </div>
-</div>
-
-<!-- ── Header ─────────────────────────────────────────── -->
-<h1>🚀 DevOps Copilot Swarm</h1>
-<p class="subtitle">
-  Risk-Aware Deployment & Self-Healing Control Plane — Google Online Boutique
-</p>
-
-<!-- ── User Bar ───────────────────────────────────────── -->
-<div id="user-bar">
-  👤 <span id="user-display" style="color:#e6edf3"></span>
-  <span id="admin-badge" style="display:none">
-    &nbsp;<span class="badge yellow">👑 Admin</span>
-  </span>
-  <button class="btn btn-secondary"
-          onclick="doLogout()"
-          style="margin-left:10px; padding:4px 12px; font-size:12px">
-    Logout
-  </button>
-</div>
-
-<!-- ── Deploy Form ─────────────────────────────────────── -->
-<div class="deploy-form">
-  <select id="service-select">
-    <option value="">Select a service...</option>
-    <option value="emailservice">📧 emailservice (Python)</option>
-    <option value="recommendationservice">⭐ recommendationservice (Python)</option>
-    <option value="adservice">📢 adservice (Java)</option>
-    <option value="shippingservice">🚚 shippingservice (Go)</option>
-    <option value="currencyservice">💱 currencyservice (Node.js)</option>
-    <option value="paymentservice">💳 paymentservice (Node.js)</option>
-    <option value="cartservice">🛒 cartservice (C#)</option>
-    <option value="checkoutservice">🏪 checkoutservice (Go)</option>
-    <option value="frontend">🖥️ frontend (Go)</option>
-    <option value="productcatalogservice">📦 productcatalogservice (Go)</option>
-  </select>
-
-  <input id="repo-input" type="text" 
-         placeholder="Repo URL" 
-         value="https://github.com/GoogleCloudPlatform/microservices-demo.git" />
-
-  <input id="changes-input" type="text"
-         placeholder="Describe your changes (e.g. Updated payment logic)"
-         onkeypress="if(event.key==='Enter') triggerDeploy()"/>
-
-  <button id="deploy-btn" class="btn btn-primary" onclick="triggerDeploy()">
-    🚀 Deploy
-  </button>
-
-  <button class="btn btn-secondary" onclick="loadHistory()">
-    📋 History
-  </button>
-
-  <button class="btn btn-secondary" onclick="loadStats()">
-    📊 Stats
-  </button>
-</div>
-
-<!-- ── Top Bar ────────────────────────────────────────── -->
-<div class="top-bar">
-  <div>
-    <div class="service" id="service-name">⚙️ No deployment running</div>
-    <div class="meta"    id="repo-url">Select a service and click Deploy</div>
-  </div>
-  <div id="pipeline-status">
-    <span class="badge gray">⏳ Idle</span>
-  </div>
-  <div style="text-align:right; font-size:12px; color:#8b949e"
-       id="last-updated">—</div>
-</div>
-
-<!-- ── Stats Bar ──────────────────────────────────────── -->
-<div class="stats-bar" id="stats-bar">
-  <div class="stat-card">
-    <div class="stat-value" id="stat-total">—</div>
-    <div class="stat-label">Total Deployments</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-value" id="stat-success" style="color:#3fb950">—</div>
-    <div class="stat-label">Successful</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-value" id="stat-blocked" style="color:#d29922">—</div>
-    <div class="stat-label">Blocked</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-value" id="stat-risk" style="color:#f85149">—</div>
-    <div class="stat-label">Avg Risk Score</div>
-  </div>
-</div>
-
-<!-- ── Charts Section ──────────────────────────────────── -->
-<div class="grid" style="margin-bottom:20px">
-
-  <!-- Deployment Status Chart -->
-  <div class="card">
-    <h2>📊 Deployment Overview</h2>
-    <canvas id="statusChart" height="200"></canvas>
-  </div>
-
-  <!-- Risk Score Trend -->
-  <div class="card">
-    <h2>📈 Risk Score Trend</h2>
-    <canvas id="riskChart" height="200"></canvas>
-  </div>
-
-</div>
-
-<!-- ── Main Grid ───────────────────────────────────────── -->
-<div class="grid">
-
-  <!-- Agent Pipeline Status -->
-  <div class="card">
-    <h2>🤖 Agent Pipeline Status</h2>
-    <div class="status-row">
-      <span>🧠 Orchestrator Agent</span>
-      <span class="badge gray" id="ag-orchestrator">⏳ Idle</span>
-    </div>
-    <div class="status-row">
-      <span>🏗️ Builder Agent</span>
-      <span class="badge gray" id="ag-builder">⏳ Idle</span>
-    </div>
-    <div class="status-row">
-      <span>🔍 Blast Radius Agent</span>
-      <span class="badge gray" id="ag-blast">⏳ Idle</span>
-    </div>
-    <div class="status-row">
-      <span>🚢 Deployment</span>
-      <span class="badge gray" id="ag-deploy">⏳ Idle</span>
-    </div>
-    <div class="status-row">
-      <span>🔧 AutoHealer Agent</span>
-      <span class="badge gray" id="ag-healer">⏳ Idle</span>
-    </div>
-  </div>
-
-  <!-- Blast Radius Analysis -->
-  <div class="card">
-    <h2>🔍 Blast Radius Analysis</h2>
-    <div id="blast-bars">
-      <p style="color:#8b949e; font-size:13px">
-        Waiting for analysis...
-      </p>
-    </div>
-  </div>
-
-  <!-- Generated Configs -->
-  <div class="card">
-    <h2>📁 Generated Configs</h2>
-    <div id="generated-files">
-      <p style="color:#8b949e; font-size:13px">
-        Waiting for builder...
-      </p>
-    </div>
-  </div>
-
-  <!-- AutoHealer Report -->
-  <div class="card">
-    <h2>🔧 AutoHealer Report</h2>
-    <div id="heal-report">
-      <p style="color:#8b949e; font-size:13px">
-        Waiting for deployment...
-      </p>
-    </div>
-  </div>
-
-  <!-- Live Pipeline Logs -->
-  <div class="card full-width">
-    <h2>📋 Live Pipeline Logs</h2>
-    <div class="log-box" id="live-logs">
-      <div class="log-info">
-        Select a service and click Deploy to start...
+  <!-- ── Login Screen ─────────────────────────────── -->
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <span class="icon">🤖</span>
+        <h1>DevOps Copilot Swarm</h1>
+        <p>Risk-Aware Deployment Control Plane</p>
       </div>
+      <div id="login-error"></div>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="login-user" placeholder="admin" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <button class="btn-primary" onclick="login()">
+        Sign In →
+      </button>
     </div>
   </div>
 
-  <!-- Deployment History -->
-  <div class="card full-width">
-    <h2>📊 Deployment History</h2>
-    <div id="history-container">
-      <p style="color:#8b949e; font-size:13px">
-        Click History to load...
-      </p>
-    </div>
+  <!-- ── App Screen ────────────────────────────────── -->
+  <div id="app-screen">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">🚀</div>
+        <div class="logo-text">DevOps Swarm</div>
+        <div class="logo-version">v2.0.0 · Production</div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Main</div>
+        <div class="nav-item active" onclick="showPage('dashboard')">
+          <span class="nav-icon">📊</span> Dashboard
+        </div>
+        <div class="nav-item" onclick="showPage('deploy')">
+          <span class="nav-icon">🚀</span> Deploy
+        </div>
+        <div class="nav-item" onclick="showPage('history')">
+          <span class="nav-icon">📋</span> History
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Intelligence</div>
+        <div class="nav-item" onclick="showPage('aiops')">
+          <span class="nav-icon">🧠</span> AIOps
+        </div>
+        <div class="nav-item" onclick="showPage('cluster')">
+          <span class="nav-icon">☸️</span> Cluster
+        </div>
+        <div class="nav-item" onclick="showPage('analytics')">
+          <span class="nav-icon">📈</span> Analytics
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">System</div>
+        <div class="nav-item" onclick="showPage('agents')">
+          <span class="nav-icon">🤖</span> Agents
+        </div>
+        <div class="nav-item" onclick="showPage('settings')">
+          <span class="nav-icon">⚙️</span> Settings
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-info" onclick="logout()">
+          <div class="user-avatar" id="user-avatar">A</div>
+          <div>
+            <div class="user-name" id="user-name">Admin</div>
+            <div class="user-role">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title" id="page-title">Dashboard</div>
+        </div>
+        <div class="topbar-right">
+          <div class="status-dot"></div>
+          <div class="time-badge" id="clock">00:00:00</div>
+          <div class="llm-indicators" id="llm-status"></div>
+        </div>
+      </div>
+
+      <div class="page-content">
+
+        <!-- ── Dashboard Page ───────────────────── -->
+        <div class="page active" id="page-dashboard">
+          <div class="stats-grid">
+            <div class="stat-card" style="--accent-color: var(--accent-blue)">
+              <div class="stat-icon">🚀</div>
+              <div class="stat-label">Total Deployments</div>
+              <div class="stat-value" id="stat-total">-</div>
+              <div class="stat-change" id="stat-total-sub">All time</div>
+            </div>
+            <div class="stat-card" style="--accent-color: var(--accent-green)">
+              <div class="stat-icon">✅</div>
+              <div class="stat-label">Successful</div>
+              <div class="stat-value" id="stat-success" style="color:var(--accent-green)">-</div>
+              <div class="stat-change up" id="stat-success-rate">-% success rate</div>
+            </div>
+            <div class="stat-card" style="--accent-color: var(--accent-yellow)">
+              <div class="stat-icon">🛡️</div>
+              <div class="stat-label">Blocked</div>
+              <div class="stat-value" id="stat-blocked" style="color:var(--accent-yellow)">-</div>
+              <div class="stat-change">Risk threshold exceeded</div>
+            </div>
+            <div class="stat-card" style="--accent-color: var(--accent-purple)">
+              <div class="stat-icon">⚡</div>
+              <div class="stat-label">Avg Risk Score</div>
+              <div class="stat-value" id="stat-risk" style="color:var(--accent-purple)">-</div>
+              <div class="stat-change">Out of 10</div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><span class="title-icon">📊</span> Deployment Overview</div>
+              </div>
+              <canvas id="chart-overview" height="200"></canvas>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><span class="title-icon">📈</span> Risk Score Trend</div>
+              </div>
+              <canvas id="chart-risk" height="200"></canvas>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="title-icon">📋</span> Recent Deployments</div>
+            </div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Service</th>
+                  <th>Status</th>
+                  <th>Risk</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody id="recent-table">
+                <tr>
+                  <td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px">Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── Deploy Page ───────────────────────── -->
+        <div class="page" id="page-deploy">
+          <div class="grid-2" style="margin-bottom:20px">
+            <!-- Immediate Deploy Card -->
+            <div class="card" style="margin-bottom:0">
+              <div class="card-header">
+                <div class="card-title"><span class="title-icon">🚀</span> Immediate Deployment</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:16px;">
+                <div class="input-group">
+                  <label>Service</label>
+                  <select id="service-select">
+                    <option value="">Select service...</option>
+                  </select>
+                </div>
+                <div class="input-group">
+                  <label>Changes Description</label>
+                  <input type="text" id="changes-input" placeholder="Describe what you're changing..." />
+                </div>
+                <button class="btn btn-deploy" id="deploy-btn" onclick="triggerDeploy()"
+                  style="width:100%; justify-content:center;">
+                  🚀 Deploy Now
+                </button>
+              </div>
+            </div>
+
+            <!-- Schedule Deploy Card -->
+            <div class="card" style="margin-bottom:0">
+              <div class="card-header">
+                <div class="card-title"><span class="title-icon">📅</span> Schedule Deployment</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <div class="input-group">
+                  <label>Service</label>
+                  <select id="sched-service">
+                    <option value="">Select service...</option>
+                  </select>
+                </div>
+                <div class="input-group">
+                  <label>Execution Time (One-time)</label>
+                  <input id="sched-datetime" type="datetime-local" />
+                </div>
+                <div class="input-group">
+                  <label>Or Cron Expression (Recurring)</label>
+                  <input id="sched-cron" type="text" placeholder="e.g. */5 * * * * or 0 2 * * *" />
+                </div>
+                <button class="btn btn-primary" onclick="scheduleDeployment()"
+                  style="width:100%; justify-content:center;">
+                  📅 Schedule Deploy
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <!-- Active Scheduled Queue -->
+            <div class="card" style="margin-bottom:0">
+              <div class="card-header">
+                <div class="card-title"><span class="title-icon">⏳</span> Active Scheduled Queue</div>
+                <button class="btn btn-secondary" onclick="loadSchedules()" style="padding:4px 8px; font-size:11px;">↻
+                  Refresh</button>
+              </div>
+              <div style="overflow-x:auto;">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Service</th>
+                      <th>Target Execution</th>
+                      <th>Cron</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="schedules-list">
+                    <tr>
+                      <td colspan="5" style="color:var(--text-muted); text-align:center; padding:20px;">No scheduled
+                        tasks found.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Pipeline -->
+            <div class="card" id="pipeline-card" style="display:none; margin-bottom:0">
+              <div class="card-header">
+                <div class="card-title"><span class="title-icon">⚡</span> Pipeline Status</div>
+                <span id="pipeline-status-badge" class="badge badge-blue">Running</span>
+              </div>
+
+              <div class="pipeline">
+                <div class="pipeline-step">
+                  <div class="step-icon pending" id="step-orchestrator">🧠</div>
+                  <div class="step-name">Orchestrator</div>
+                </div>
+                <div class="pipeline-step">
+                  <div class="step-icon pending" id="step-builder">🏗️</div>
+                  <div class="step-name">Builder</div>
+                </div>
+                <div class="pipeline-step">
+                  <div class="step-icon pending" id="step-blast">🔍</div>
+                  <div class="step-name">Blast Radius</div>
+                </div>
+                <div class="pipeline-step">
+                  <div class="step-icon pending" id="step-healer">🔧</div>
+                  <div class="step-name">AutoHealer</div>
+                </div>
+              </div>
+
+              <div class="grid-2" style="gap:16px">
+                <div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                    <span style="font-size:13px;font-weight:600">Risk Score</span>
+                    <span id="risk-value" style="font-size:13px;font-weight:700">-/10</span>
+                  </div>
+                  <div class="risk-meter">
+                    <div class="risk-fill" id="risk-fill" style="width:0%"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;margin-top:4px">
+                    <span style="font-size:10px;color:var(--accent-green)">Safe</span>
+                    <span style="font-size:10px;color:var(--accent-red)">Critical</span>
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size:13px;font-weight:600;margin-bottom:6px">Confidence</div>
+                  <div id="confidence-display" style="font-size:28px;font-weight:800">-</div>
+                  <div id="confidence-label" style="font-size:12px;color:var(--text-muted)">Calculating...</div>
+                </div>
+              </div>
+            </div> <!-- Close grid-2 -->
+
+            <div style="margin-top:16px">
+              <div
+                style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.8px">
+                Live Logs
+              </div>
+              <div class="log-viewer" id="live-logs"></div>
+            </div>
+          </div>
+        </div> <!-- Close outer grid-2 -->
+
+        <!-- Result Card -->
+        <div class="card" id="result-card" style="display:none; margin-top:20px">
+          <div class="card-header">
+            <div class="card-title" id="result-title">Result</div>
+          </div>
+          <div id="result-content"></div>
+        </div>
+      </div>
+
+      <!-- ── History Page ──────────────────────── -->
+      <div class="page" id="page-history">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><span class="title-icon">📋</span> Deployment History</div>
+            <button class="btn btn-secondary" onclick="loadHistory()">↻ Refresh</button>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Service</th>
+                <th>Language</th>
+                <th>Status</th>
+                <th>Risk Score</th>
+                <th>Deployed At</th>
+              </tr>
+            </thead>
+            <tbody id="history-table">
+              <tr>
+                <td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── AIOps Page ────────────────────────── -->
+      <div class="page" id="page-aiops">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="title-icon">🔮</span> Deployment Window</div>
+              <button class="btn btn-secondary" onclick="loadDeployWindow()">↻ Refresh</button>
+            </div>
+            <div id="deploy-window-content">
+              <div style="text-align:center;color:var(--text-muted);padding:24px">Loading...</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="title-icon">🤖</span> Agent Accuracy</div>
+            </div>
+            <div id="agent-accuracy-content">
+              <div style="text-align:center;color:var(--text-muted);padding:24px">Loading...</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><span class="title-icon">🔍</span> Anomaly Detection</div>
+          </div>
+          <div style="display:flex;gap:12px;margin-bottom:16px">
+            <select id="anomaly-service" class="input-group select" style="width:200px">
+              <option value="">Select service...</option>
+            </select>
+            <button class="btn btn-secondary" onclick="runAnomalyDetection()">Analyze</button>
+          </div>
+          <div id="anomaly-result">
+            <div style="color:var(--text-muted);font-size:13px">Select a service to run anomaly detection</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Analytics Page ───────────────────── -->
+      <div class="page" id="page-analytics">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="title-icon">🥧</span> Status Distribution</div>
+            </div>
+            <canvas id="chart-donut" height="250"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="title-icon">📊</span> Risk Distribution</div>
+            </div>
+            <canvas id="chart-risk-dist" height="250"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Cluster Page ──────────────────────── -->
+      <div class="page" id="page-cluster">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="title-icon">☸️</span> Cluster Health</div>
+              <button class="btn btn-secondary" onclick="loadCluster()">↻ Refresh</button>
+            </div>
+            <div id="cluster-content">
+              <div style="text-align:center;color:var(--text-muted);padding:24px">Loading...</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="title-icon">💬</span> Cluster Chat</div>
+            </div>
+            <div id="chat-messages"
+              style="height:220px;overflow-y:auto;margin-bottom:12px;font-size:13px;line-height:1.6"></div>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="chat-input" placeholder="Ask about your cluster... e.g. 'What pods are failing?'"
+                style="flex:1;padding:10px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px;outline:none"
+                onkeypress="if(event.key==='Enter')sendChat()" />
+              <button class="btn btn-secondary" onclick="sendChat()">Send</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+          <div class="card-header">
+            <div class="card-title"><span class="title-icon">🔗</span> Swarm Service Dependency Graph</div>
+          </div>
+          <div
+            style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:12px; color:var(--text-secondary);">
+            <div>Hover over a service node to highlight upstream call paths (red) and downstream dependencies (green).
+            </div>
+            <div>🟢 Green dot: Active status</div>
+          </div>
+          <div id="svg-container"
+            style="width:100%; height:500px; background:#070a14; border-radius:var(--radius-sm); border:1px solid var(--border); position:relative; overflow:hidden;">
+            <!-- SVG will be dynamically generated here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Agents Page ───────────────────────── -->
+      <div class="page" id="page-agents">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="title-icon">🤖</span> LLM Providers</div>
+            </div>
+            <div id="llm-provider-list">Loading...</div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="title-icon">📊</span> Agent Performance</div>
+            </div>
+            <div id="agent-perf-content">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Settings Page ─────────────────────── -->
+      <div class="page" id="page-settings">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><span class="title-icon">⚙️</span> System Information</div>
+          </div>
+          <div id="settings-content">Loading...</div>
+        </div>
+      </div>
+
+  </div><!-- page-content -->
+  </main>
   </div>
 
-</div>
+  <div id="toast-container"></div>
 
-<!-- ── Toast ──────────────────────────────────────────── -->
-<div id="toast"></div>
+  <script>
+    // ── Config ───────────────────────────────────────────
+    const API = '';
+    let authToken = localStorage.getItem('token') || '';
+    let currentId = null;
+    let pollTimer = null;
+    let charts = {};
+    let globalWS = null;
+    let lastLogCount = 0;
 
-<script>
-// ── Config ───────────────────────────────────────────────
-const API = ""; // Use relative paths to avoid port/origin issues
+    // ── Service Graph Dependencies & Layout ──────────────
+    const serviceDependencies = {
+      "frontend": ["adservice", "cartservice", "checkoutservice", "currencyservice", "paymentservice", "productcatalogservice", "recommendationservice", "shippingservice"],
+      "checkoutservice": ["cartservice", "currencyservice", "emailservice", "paymentservice", "productcatalogservice", "shippingservice"],
+      "recommendationservice": ["productcatalogservice"],
+      "adservice": [],
+      "cartservice": [],
+      "currencyservice": [],
+      "paymentservice": [],
+      "shippingservice": [],
+      "emailservice": [],
+      "productcatalogservice": []
+    };
 
-// ── State ────────────────────────────────────────────────
-let authToken    = localStorage.getItem("token") || "";
-let currentId    = null;
-let pollTimer    = null;
-let eventSource  = null;
+    const nodePositions = {
+      "frontend": { x: 500, y: 50 },
+      "checkoutservice": { x: 300, y: 180 },
+      "recommendationservice": { x: 700, y: 180 },
+      "adservice": { x: 80, y: 350 },
+      "cartservice": { x: 190, y: 350 },
+      "currencyservice": { x: 300, y: 350 },
+      "paymentservice": { x: 410, y: 350 },
+      "productcatalogservice": { x: 520, y: 350 },
+      "shippingservice": { x: 630, y: 350 },
+      "emailservice": { x: 740, y: 350 }
+    };
 
-let statusChart = null;
-let riskChart   = null;
+    // ── Auth ─────────────────────────────────────────────
+    async function login() {
+      const user = document.getElementById('login-user').value.trim();
+      const pass = document.getElementById('login-pass').value;
+      const err = document.getElementById('login-error');
 
-// ── Init ─────────────────────────────────────────────────
-window.addEventListener("DOMContentLoaded", () => {
-  console.log("Dashboard DOM loaded. Initializing...");
-  try {
-    initCharts();
-  } catch (e) {
-    console.error("Chart initialization failed:", e);
-  }
+      if (!user || !pass) {
+        err.textContent = 'Please enter username and password';
+        err.style.display = 'block';
+        return;
+      }
 
-  if (authToken) {
-    try {
-      showApp();
-      loadStats();
-      loadHistory();
-    } catch (e) {
-      console.error("Post-auth initialization failed:", e);
+      try {
+        const res = await fetch(`${API}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          err.textContent = data.detail || 'Invalid credentials';
+          err.style.display = 'block';
+          return;
+        }
+
+        authToken = data.access_token;
+        localStorage.setItem('token', authToken);
+
+        const avatar = (data.username || 'A')[0].toUpperCase();
+        document.getElementById('user-avatar').textContent = avatar;
+        document.getElementById('user-name').textContent = data.username;
+
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app-screen').style.display = 'block';
+
+        initApp();
+      } catch (e) {
+        err.textContent = 'Connection error — is the server running?';
+        err.style.display = 'block';
+      }
     }
-  } else {
-    console.log("No auth token found. Showing login overlay.");
-  }
-});
 
-// ── Auth ─────────────────────────────────────────────────
-async function doLogin() {
-  const username = document.getElementById("login-username").value.trim();
-  const password = document.getElementById("login-password").value;
-  const errDiv   = document.getElementById("login-error");
+    function logout() {
+      localStorage.removeItem('token');
+      authToken = '';
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('app-screen').style.display = 'none';
+    }
 
-  errDiv.style.display = "none";
+    // Auto-login if token exists
+    if (authToken) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-screen').style.display = 'block';
+      initApp();
+    }
 
-  if (!username || !password) {
-    errDiv.textContent   = "❌ Please enter username and password";
-    errDiv.style.display = "block";
-    return;
-  }
-
-  try {
-    const params = new URLSearchParams();
-    params.append("username", username);
-    params.append("password", password);
-
-    const res  = await fetch(`${API}/auth/login`, {
-      method:  "POST",
-      headers: {"Content-Type": "application/x-www-form-urlencoded"},
-      body:    params
+    document.getElementById('login-pass').addEventListener('keypress', e => {
+      if (e.key === 'Enter') login();
     });
 
-    if (!res.ok) {
+    // ── API Helper ───────────────────────────────────────
+    async function apiFetch(path, opts = {}) {
+      const res = await fetch(`${API}${path}`, {
+        ...opts,
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+          ...(opts.headers || {})
+        }
+      });
+      if (res.status === 401) { logout(); return null; }
+      return res;
+    }
+
+    // ── Navigation ───────────────────────────────────────
+    function showPage(name) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+      const page = document.getElementById(`page-${name}`);
+      if (page) page.classList.add('active');
+
+      const nav = document.querySelector(`[onclick="showPage('${name}')"]`);
+      if (nav) nav.classList.add('active');
+
+      const titles = {
+        dashboard: 'Dashboard', deploy: 'New Deployment',
+        history: 'History', aiops: 'AIOps Intelligence',
+        cluster: 'Cluster', analytics: 'Analytics',
+        agents: 'AI Agents', settings: 'Settings'
+      };
+      document.getElementById('page-title').textContent = titles[name] || name;
+
+      if (name === 'dashboard') { loadStats(); loadRecentHistory(); }
+      if (name === 'deploy') { loadSchedules(); }
+      if (name === 'history') loadHistory();
+      if (name === 'aiops') { loadDeployWindow(); loadAgentAccuracy(); loadAnomalyServices(); }
+      if (name === 'cluster') { loadCluster(); renderServiceGraph(); }
+      if (name === 'agents') loadAgentPage();
+      if (name === 'analytics') loadAnalytics();
+      if (name === 'settings') loadSettings();
+    }
+
+    // ── Clock ────────────────────────────────────────────
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').textContent =
+        now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: false });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ── Init ─────────────────────────────────────────────
+    function initApp() {
+      loadStats();
+      loadRecentHistory();
+      loadLLMStatus();
+      loadServices();
+      initCharts();
+      connectGlobalWebSocket();
+      setInterval(loadLLMStatus, 30000);
+    }
+
+    // ── Stats ────────────────────────────────────────────
+    async function loadStats() {
+      const res = await apiFetch('/api/v1/stats');
+      if (!res) return;
       const data = await res.json();
-      errDiv.textContent   = `❌ ${data.detail || "Login failed"}`;
-      errDiv.style.display = "block";
-      return;
+
+      document.getElementById('stat-total').textContent = data.total_deployments || 0;
+      document.getElementById('stat-success').textContent = data.successful || 0;
+      document.getElementById('stat-blocked').textContent = data.blocked || 0;
+      document.getElementById('stat-risk').textContent = (data.avg_risk_score || 0).toFixed(1);
+
+      const rate = data.success_rate || 0;
+      document.getElementById('stat-success-rate').textContent = `${rate}% success rate`;
+
+      updateCharts(data);
     }
 
-    const data = await res.json();
-    authToken = data.access_token;
-      localStorage.setItem("token",    authToken);
-      localStorage.setItem("username", data.username);
-      localStorage.setItem("is_admin", data.is_admin);
+    // ── Services ─────────────────────────────────────────
+    async function loadServices() {
+      const res = await apiFetch('/api/v1/services');
+      if (!res) return;
+      const data = await res.json();
 
-      document.getElementById("user-display").textContent = data.full_name || data.username;
-      if (data.is_admin) {
-        document.getElementById("admin-badge").style.display = "inline";
-      }
-
-      showApp();
-      loadStats();
-      loadHistory();
-      showToast(`👋 Welcome back, ${data.username}!`);
-    } catch(e) {
-    errDiv.textContent   = "❌ Cannot connect to server. Is it running?";
-    errDiv.style.display = "block";
-  }
-}
-
-function showApp() {
-  document.getElementById("login-overlay").style.display = "none";
-  document.getElementById("user-bar").style.display      = "block";
-  document.getElementById("user-display").textContent    =
-    localStorage.getItem("username") || "User";
-  if (localStorage.getItem("is_admin") === "true") {
-    document.getElementById("admin-badge").style.display = "inline";
-  }
-}
-
-function doLogout() {
-  authToken = "";
-  localStorage.clear();
-  location.reload();
-}
-
-// ── API Helper ────────────────────────────────────────────
-async function apiFetch(endpoint, options = {}) {
-  try {
-    const res = await fetch(`${API}${endpoint}`, {
-      ...options,
-      headers: {
-        "Content-Type":  "application/json",
-        "Authorization": `Bearer ${authToken}`,
-        ...(options.headers || {})
-      }
-    });
-
-    if (res.status === 401) {
-      doLogout();
-      return null;
-    }
-
-    return res;
-  } catch(e) {
-    console.error(`API error [${endpoint}]:`, e);
-    return null;
-  }
-}
-
-// ── SSE ───────────────────────────────────────────────────
-function startSSE(deploymentId) {
-    if (eventSource) {
-        eventSource.close();
-    }
-
-    // ✅ Pass token as query param (SSE can't use headers)
-    const url = `${API}/api/v1/stream/${deploymentId}?token=${authToken}`;
-    eventSource = new EventSource(url);
-
-    eventSource.addEventListener("log", (e) => {
-        const data = JSON.parse(e.data);
-        appendLog(data.log);
-    });
-
-    eventSource.addEventListener("status", (e) => {
-        const data = JSON.parse(e.data);
-        updateStatusBadges(data);
-    });
-
-    eventSource.addEventListener("complete", () => {
-        eventSource.close();
-        loadHistory();
-        loadStats();
-    });
-
-    eventSource.onerror = () => {
-        eventSource.close();
-        startPolling(); // fallback
-    };
-}
-
-// ── Polling (SSE fallback) ────────────────────────────────
-function startPolling() {
-  if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(pollStatus, 2000);
-  pollStatus();
-}
-
-async function pollStatus() {
-  if (!currentId) return;
-  try {
-    const res = await apiFetch(`/api/v1/status/${currentId}`);
-    if (!res) return;
-    const data = await res.json();
-    updateDashboard(data);
-
-    if (["healed", "blocked", "failed"].includes(data.status)) {
-      clearInterval(pollTimer);
-      loadHistory();
-      loadStats();
-    }
-  } catch(e) {
-    console.error("Poll error:", e);
-  }
-}
-
-// ── Append a single log line incrementally ────────────────
-function appendLog(log) {
-  const logBox = document.getElementById("live-logs");
-  if (!logBox) return;
-  const div = document.createElement("div");
-  let cls   = "log-info";
-  if      (log.includes("✅")) cls = "log-ok";
-  else if (log.includes("❌")) cls = "log-err";
-  else if (log.includes("⚠️")) cls = "log-warn";
-  div.className   = cls;
-  div.textContent = log;
-  logBox.appendChild(div);
-  logBox.scrollTop = logBox.scrollHeight;
-}
-
-// ── Update status badges from a partial SSE status event ──
-function updateStatusBadges(data) {
-  if (!data) return;
-  document.getElementById("pipeline-status").innerHTML =
-    getStatusBadge(data.status);
-  document.getElementById("last-updated").textContent =
-    `Updated: ${new Date().toLocaleTimeString("en-IN", {timeZone:"Asia/Kolkata"})}`;
-  updateAgentBadges(data.status);
-}
-
-// ── Update triggerDeploy ──────────────────────────────────
-async function triggerDeploy() {
-  const service = document.getElementById("service-select").value;
-  const changes = document.getElementById("changes-input").value.trim();
-
-  if (!service) { showToast("⚠️ Please select a service!"); return; }
-  if (!changes || changes.length < 3) {
-    showToast("⚠️ Please describe your changes!");
-    return;
-  }
-
-  const btn = document.getElementById("deploy-btn");
-  btn.disabled    = true;
-  btn.textContent = "🔄 Deploying...";
-
-  try {
-    const res = await apiFetch("/api/v1/deploy", {
-      method: "POST",
-      body:   JSON.stringify({
-        repo_url:     "https://github.com/GoogleCloudPlatform/microservices-demo",
-        service_name: service,
-        changes:      changes
-      })
-    });
-
-    if (!res) return;
-    const data = await res.json();
-
-    if (!res.ok) {
-      showToast(`❌ Error: ${data.detail || JSON.stringify(data)}`);
-      return;
-    }
-
-    currentId = data.deployment_id;
-    showToast(`🚀 Deployment #${currentId} started!`);
-    resetDashboard();
-    startSSE(currentId); // ✅ Use SSE for real-time updates
-
-  } catch(e) {
-    showToast(`❌ Failed: ${e.message}`);
-  } finally {
-    btn.disabled    = false;
-    btn.textContent = "🚀 Deploy";
-  }
-}
-
-
-// ── Dashboard Update ─────────────────────────────────────
-function resetDashboard() {
-  document.getElementById("blast-bars").innerHTML =
-    `<p style="color:#8b949e;font-size:13px">Analyzing...</p>`;
-  document.getElementById("generated-files").innerHTML =
-    `<p style="color:#8b949e;font-size:13px">Generating...</p>`;
-  document.getElementById("heal-report").innerHTML =
-    `<p style="color:#8b949e;font-size:13px">Waiting...</p>`;
-  document.getElementById("live-logs").innerHTML =
-    `<div class="log-info">Pipeline starting...</div>`;
-
-  ["ag-orchestrator","ag-builder","ag-blast","ag-deploy","ag-healer"]
-    .forEach(id => {
-      const el = document.getElementById(id);
-      el.className   = "badge gray";
-      el.textContent = "⏳ Idle";
-    });
-}
-
-function updateDashboard(data) {
-  if (!data) return;
-
-  // Top bar
-  document.getElementById("service-name").textContent =
-    `⚙️ ${data.service_name} ${data.language ? '('+data.language+')' : ''}`;
-  document.getElementById("repo-url").textContent =
-    data.repo_url || "";
-  document.getElementById("pipeline-status").innerHTML =
-    getStatusBadge(data.status);
-  document.getElementById("last-updated").textContent =
-    `Updated: ${new Date().toLocaleTimeString('en-IN', {timeZone:'Asia/Kolkata'})}`;
-
-  // Agent badges
-  updateAgentBadges(data.status);
-
-  // Blast radius
-  if (data.risk_score !== null && data.risk_score !== undefined) {
-    const affected = data.affected_services || [];
-    let html = buildRiskBar(data.service_name, data.risk_score);
-    affected.forEach((svc, i) => {
-      const scores = [7,3,5,6,4,8,3,5];
-      html += buildRiskBar(`${svc} (affected)`, scores[i % scores.length]);
-    });
-    if (data.risk_analysis) {
-      html += `<p style="font-size:12px; color:#8b949e; margin-top:12px; line-height:1.6">
-        ${data.risk_analysis.substring(0,200)}...
-      </p>`;
-    }
-    document.getElementById("blast-bars").innerHTML = html;
-  }
-
-  // Generated files
-  if (data.generated_files && data.generated_files.length > 0) {
-    const icons = {
-      "Dockerfile":        "🐳",
-      "k8s-manifest.yaml": "☸️",
-      "pipeline.yml":      "⚙️"
-    };
-    let html = "";
-    data.generated_files.forEach(f => {
-      html += `
-        <div class="status-row">
-          <span>${icons[f] || "📄"} ${f}</span>
-          <span class="badge blue">✅ Generated</span>
-        </div>`;
-    });
-    document.getElementById("generated-files").innerHTML = html;
-  }
-
-  // Healing report
-  if (data.healing_report) {
-    const lines = data.healing_report
-      .replace(/\*\*/g, "")
-      .split('\n')
-      .filter(l => l.trim())
-      .slice(0, 6);
-    let html = "";
-    lines.forEach((line, i) => {
-      html += `
-        <div class="heal-action">
-          <span>${i+1}.</span> ${line.trim()}
-        </div>`;
-    });
-    document.getElementById("heal-report").innerHTML = html;
-  }
-
-  // Live logs
-  if (data.logs && data.logs.length > 0) {
-    let html = "";
-    data.logs.forEach(log => {
-      let cls = "log-info";
-      if (log.includes("✅")) cls = "log-ok";
-      else if (log.includes("❌")) cls = "log-err";
-      else if (log.includes("⚠️")) cls = "log-warn";
-      html += `<div class="${cls}">${log}</div>`;
-    });
-    const logBox = document.getElementById("live-logs");
-    logBox.innerHTML  = html;
-    logBox.scrollTop  = logBox.scrollHeight;
-  }
-}
-
-function updateAgentBadges(status) {
-  const statusOrder = [
-    "running", "orchestrated", "built",
-    "deployed", "healed", "blocked", "failed"
-  ];
-  const idx = statusOrder.indexOf(status);
-
-  function setBadge(id, color, text) {
-    const el = document.getElementById(id);
-    if (el) { el.className = `badge ${color}`; el.textContent = text; }
-  }
-
-  // Orchestrator
-  if (idx >= 1)      setBadge("ag-orchestrator", "green",  "✅ Done");
-  else if (idx === 0) setBadge("ag-orchestrator", "blue",   "🔄 Running");
-  else                setBadge("ag-orchestrator", "gray",   "⏳ Idle");
-
-  // Builder
-  if (idx >= 2)      setBadge("ag-builder", "green",  "✅ Done");
-  else if (idx === 1) setBadge("ag-builder", "blue",   "🔄 Running");
-  else                setBadge("ag-builder", "gray",   "⏳ Idle");
-
-  // Blast Radius
-  if (idx >= 3)      setBadge("ag-blast", "yellow", "⚠️ Analyzed");
-  else if (idx === 2) setBadge("ag-blast", "blue",   "🔄 Running");
-  else                setBadge("ag-blast", "gray",   "⏳ Idle");
-
-  // Deployment
-  if (status === "healed")   setBadge("ag-deploy", "green",  "✅ Deployed");
-  else if (status === "blocked") setBadge("ag-deploy", "orange", "🛡️ Blocked");
-  else if (status === "failed")  setBadge("ag-deploy", "red",    "❌ Failed");
-  else if (idx >= 3)             setBadge("ag-deploy", "blue",   "🔄 Running");
-  else                           setBadge("ag-deploy", "gray",   "⏳ Idle");
-
-  // AutoHealer
-  if (status === "healed")   setBadge("ag-healer", "green", "✅ Healed");
-  else if (idx >= 3 && status !== "blocked")
-                               setBadge("ag-healer", "blue",  "🔄 Running");
-  else                        setBadge("ag-healer", "gray",  "⏳ Idle");
-}
-
-// ── History ───────────────────────────────────────────────
-async function loadHistory() {
-  console.log("Attempting to load history...");
-  try {
-    const res = await apiFetch("/api/v1/history");
-    if (!res || !res.ok) {
-      console.error("History fetch failed", res);
-      showToast("❌ Failed to load history");
-      return;
-    }
-    const data = await res.json();
-    console.log("History data received:", data);
-
-    const container = document.getElementById("history-container");
-    if (!container) return;
-
-    if (!Array.isArray(data) || data.length === 0) {
-      container.innerHTML = `<p style="color:#8b949e;font-size:13px">No deployments found.</p>`;
-      return;
-    }
-
-    let html = `
-      <table class="history-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Service</th>
-            <th>Risk</th>
-            <th>Status</th>
-            <th>Time</th>
-          </tr>
-        </thead>
-        <tbody>`;
-
-    data.forEach(d => {
-      const risk = getRiskInfo(d.risk_score || 0);
-      const dateStr = d.created_at ? new Date(d.created_at).toLocaleString() : "—";
-      
-      html += `
-        <tr onclick="loadDeployment(${d.id})">
-          <td style="color:#8b949e">#${d.id}</td>
-          <td><strong>${d.service_name}</strong></td>
-          <td>
-            <span class="badge ${risk.color}">
-              ${risk.icon} ${d.risk_score || 0}/10
-            </span>
-          </td>
-          <td>${getStatusBadge(d.status)}</td>
-          <td style="color:#8b949e">${dateStr}</td>
-        </tr>`;
-    });
-
-    html += `</tbody></table>`;
-    container.innerHTML = html;
-    
-    if (typeof updateCharts === "function") {
-        updateCharts(data);
-    }
-
-  } catch(e) {
-    console.error("History error:", e);
-    showToast("❌ Error loading history");
-  }
-}
-
-async function loadDeployment(id) {
-  if (!id) return;
-  try {
-    const res = await apiFetch(`/api/v1/status/${id}`);
-    if (!res || !res.ok) {
-      showToast("❌ Could not load deployment details");
-      return;
-    }
-    const data = await res.json();
-    updateDashboard(data);
-    showToast(`📋 Loaded deployment #${id}`);
-
-    if (!["healed","blocked","failed"].includes(data.status)) {
-      startSSE(id); // ✅ Resume real-time tracking via SSE
-    }
-  } catch(e) {
-    console.error("Load deployment error:", e);
-  }
-}
-
-// ── Stats ─────────────────────────────────────────────────
-async function loadStats() {
-  console.log("Attempting to load stats...");
-  try {
-    const res = await apiFetch("/api/v1/stats");
-    if (!res || !res.ok) {
-      console.error("Stats fetch failed", res);
-      showToast("❌ Failed to load stats");
-      return;
-    }
-    const data = await res.json();
-    console.log("Stats data received:", data);
-
-    const updateText = (id, val) => {
+      const services = data.services || [];
+      ['service-select', 'anomaly-service', 'sched-service'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.textContent = val !== undefined ? val : "—";
-    };
+        if (!el) return;
+        el.innerHTML = '<option value="">Select service...</option>';
+        services.forEach(s => {
+          el.innerHTML += `<option value="${s}">${s}</option>`;
+        });
+      });
+    }
 
-    updateText("stat-total",   data.total_deployments);
-    updateText("stat-success", data.successful);
-    updateText("stat-blocked", data.blocked);
-    updateText("stat-risk",    (data.avg_risk_score || 0) + "/10");
-    
-  } catch(e) {
-    console.error("Stats error:", e);
-  }
-}
+    // ── LLM Status ───────────────────────────────────────
+    async function loadLLMStatus() {
+      try {
+        const res = await apiFetch('/api/v1/llm/status');
+        if (!res) return;
+        const data = await res.json();
 
-// ── Helpers ───────────────────────────────────────────────
-function getRiskInfo(score) {
-  if (score >= 7) return { color:"red",    icon:"🔴", level:"high"   };
-  if (score >= 4) return { color:"orange", icon:"🟡", level:"medium" };
-  return              { color:"green",  icon:"🟢", level:"low"    };
-}
+        const container = document.getElementById('llm-status');
+        container.innerHTML = '';
 
-function buildRiskBar(label, score) {
-  const risk = getRiskInfo(score);
-  return `
-    <div class="risk-bar-wrap">
-      <div class="risk-label">
-        <span>${label}</span>
-        <span>${risk.icon} ${score}/10</span>
+        Object.entries(data).forEach(([name, info]) => {
+          const on = info.enabled && info.available;
+          container.innerHTML += `
+        <div class="llm-chip">
+          <div class="llm-dot ${on ? 'on' : 'off'}"></div>
+          ${name}
+        </div>`;
+        });
+
+        // Also update agents page
+        const list = document.getElementById('llm-provider-list');
+        if (list) {
+          list.innerHTML = Object.entries(data).map(([name, info]) => {
+            const on = info.enabled && info.available;
+            return `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="llm-dot ${on ? 'on' : 'off'}" style="width:10px;height:10px"></div>
+              <div>
+                <div style="font-weight:600;font-size:13px">${name}</div>
+                <div style="font-size:11px;color:var(--text-muted)">
+                  ${info.configured ? 'Configured' : 'Not configured'} · 
+                  Failures: ${info.failures || 0}
+                </div>
+              </div>
+            </div>
+            <span class="badge ${on ? 'badge-green' : 'badge-gray'}">
+              ${on ? '● Online' : '○ Offline'}
+            </span>
+          </div>`;
+          }).join('');
+        }
+      } catch (e) { }
+    }
+
+    // ── Recent History (for dashboard) ───────────────────
+    async function loadRecentHistory() {
+      const res = await apiFetch('/api/v1/history?limit=10');
+      if (!res) return;
+      const deps = await res.json();
+
+      const tbody = document.getElementById('recent-table');
+      if (!deps.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px">No deployments yet</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = deps.slice(0, 5).map(d => `
+    <tr>
+      <td style="color:var(--text-muted)">#${d.id}</td>
+      <td><strong>${d.service_name}</strong></td>
+      <td>${statusBadge(d.status)}</td>
+      <td>${riskBadge(d.risk_score)}</td>
+      <td style="color:var(--text-muted);font-size:12px">${formatTime(d.created_at)}</td>
+    </tr>`).join('');
+
+      if (charts.risk) {
+        const recent = deps.slice(0, 10).reverse();
+        charts.risk.data.labels = recent.map(d => `#${d.id}`);
+        charts.risk.data.datasets[0].data = recent.map(d => d.risk_score || 0);
+        charts.risk.update();
+      }
+    }
+
+    // ── Full History ─────────────────────────────────────
+    async function loadHistory() {
+      const res = await apiFetch('/api/v1/history?limit=50');
+      if (!res) return;
+      const deps = await res.json();
+
+      const tbody = document.getElementById('history-table');
+      if (!deps.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px">No deployments yet</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = deps.map(d => `
+    <tr>
+      <td style="color:var(--text-muted)">#${d.id}</td>
+      <td><strong>${d.service_name}</strong></td>
+      <td><span style="color:var(--text-muted)">${d.language || 'Unknown'}</span></td>
+      <td>${statusBadge(d.status)}</td>
+      <td>${riskBadge(d.risk_score)}</td>
+      <td style="color:var(--text-muted);font-size:12px">${formatTime(d.created_at)}</td>
+    </tr>`).join('');
+    }
+
+    // ── Deploy ───────────────────────────────────────────
+    async function triggerDeploy() {
+      const service = document.getElementById('service-select').value;
+      const changes = document.getElementById('changes-input').value.trim();
+      const btn = document.getElementById('deploy-btn');
+
+      if (!service) { showToast('⚠️ Please select a service', 'warn'); return; }
+      if (!changes || changes.length < 3) { showToast('⚠️ Describe your changes', 'warn'); return; }
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Deploying...';
+
+      try {
+        const res = await apiFetch('/api/v1/deploy', {
+          method: 'POST',
+          body: JSON.stringify({
+            repo_url: 'https://github.com/GoogleCloudPlatform/microservices-demo',
+            service_name: service,
+            changes: changes
+          })
+        });
+
+        if (!res) return;
+        const data = await res.json();
+
+        if (!res.ok) {
+          showToast(`❌ ${data.detail || 'Deploy failed'}`, 'error');
+          return;
+        }
+
+        currentId = data.deployment_id;
+        showToast(`🚀 Pipeline #${currentId} started!`, 'success');
+        document.getElementById('changes-input').value = '';
+
+        // Show pipeline card
+        document.getElementById('pipeline-card').style.display = 'block';
+        document.getElementById('result-card').style.display = 'none';
+        document.getElementById('live-logs').innerHTML = '';
+        lastLogCount = 0;
+        resetPipeline();
+
+        // Start polling
+        if (pollTimer) clearInterval(pollTimer);
+        pollStatus();
+        pollTimer = setInterval(pollStatus, 2000);
+
+      } catch (e) {
+        showToast(`❌ Error: ${e.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🚀 Deploy Now';
+      }
+    }
+
+    function resetPipeline() {
+      ['orchestrator', 'builder', 'blast', 'healer'].forEach(s => {
+        document.getElementById(`step-${s}`).className = 'step-icon pending';
+      });
+      document.getElementById('risk-fill').style.width = '0%';
+      document.getElementById('risk-value').textContent = '-/10';
+      document.getElementById('confidence-display').textContent = '-';
+      document.getElementById('confidence-label').textContent = 'Calculating...';
+    }
+
+    // ── Poll Status ──────────────────────────────────────
+    async function pollStatus() {
+      if (!currentId) return;
+      try {
+        const res = await apiFetch(`/api/v1/status/${currentId}`);
+        if (!res) return;
+        const data = await res.json();
+
+        updatePipelineUI(data);
+
+        const done = ['healed', 'blocked', 'failed'].includes(data.status);
+        if (done) {
+          clearInterval(pollTimer);
+          showResult(data);
+          loadStats();
+          loadRecentHistory();
+        }
+      } catch (e) { }
+    }
+
+    function updatePipelineUI(data) {
+      const { status, risk_score, logs } = data;
+
+      // Step states
+      const stepMap = {
+        running: ['running', 'pending', 'pending', 'pending'],
+        orchestrated: ['done', 'running', 'pending', 'pending'],
+        built: ['done', 'done', 'running', 'pending'],
+        analyzed: ['done', 'done', 'done', 'running'],
+        deployed: ['done', 'done', 'done', 'running'],
+        healed: ['done', 'done', 'done', 'done'],
+        blocked: ['done', 'done', 'blocked', 'pending'],
+        failed: ['done', 'done', 'done', 'blocked']
+      };
+
+      const steps = stepMap[status] || ['pending', 'pending', 'pending', 'pending'];
+      const stepIds = ['orchestrator', 'builder', 'blast', 'healer'];
+      stepIds.forEach((id, i) => {
+        document.getElementById(`step-${id}`).className = `step-icon ${steps[i]}`;
+      });
+
+      // Risk score
+      if (risk_score !== undefined && risk_score !== null) {
+        const pct = (risk_score / 10) * 100;
+        const color = risk_score <= 3 ? 'var(--accent-green)' :
+          risk_score <= 6 ? 'var(--accent-yellow)' :
+            'var(--accent-red)';
+        document.getElementById('risk-fill').style.width = `${pct}%`;
+        document.getElementById('risk-fill').style.background = color;
+        document.getElementById('risk-value').textContent = `${risk_score}/10`;
+        document.getElementById('risk-value').style.color = color;
+
+        // Confidence (rough calculation)
+        const conf = Math.max(0, Math.round(100 - (risk_score * 10)));
+        document.getElementById('confidence-display').textContent = `${conf}%`;
+        document.getElementById('confidence-display').style.color = color;
+        document.getElementById('confidence-label').textContent =
+          conf >= 70 ? '✅ Safe to deploy' :
+            conf >= 40 ? '⚠️ Proceed with caution' : '❌ High risk';
+      }
+
+      // Logs
+      const logDiv = document.getElementById('live-logs');
+      if (logs && logs.length > lastLogCount) {
+        const newLogs = logs.slice(lastLogCount);
+        newLogs.forEach(log => {
+          const div = document.createElement('div');
+          div.className = 'log-line ' + (
+            log.includes('✅') ? 'log-ok' :
+              log.includes('❌') ? 'log-err' :
+                log.includes('⚠️') ? 'log-warn' :
+                  log.includes('🧠') || log.includes('🏗️') ||
+                    log.includes('🔍') || log.includes('🔧') ? 'log-info' : 'log-dim'
+          );
+          div.textContent = log;
+          logDiv.appendChild(div);
+        });
+        logDiv.scrollTop = logDiv.scrollHeight;
+        lastLogCount = logs.length;
+      }
+
+      // Badge
+      const badge = document.getElementById('pipeline-status-badge');
+      const statusConfig = {
+        healed: ['badge-green', '✅ Healed'],
+        blocked: ['badge-yellow', '🛡️ Blocked'],
+        failed: ['badge-red', '❌ Failed'],
+        running: ['badge-blue', '⚡ Running']
+      };
+      const [cls, txt] = statusConfig[status] || ['badge-blue', '⚡ Running'];
+      badge.className = `badge ${cls}`;
+      badge.textContent = txt;
+    }
+
+    function showResult(data) {
+      const card = document.getElementById('result-card');
+      const title = document.getElementById('result-title');
+      const content = document.getElementById('result-content');
+      card.style.display = 'block';
+
+      if (data.status === 'healed') {
+        title.innerHTML = '<span class="title-icon">✅</span> Deployment Successful';
+        content.innerHTML = `
+      <div style="padding:16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius-sm)">
+        <div style="font-size:14px;color:var(--accent-green);font-weight:600;margin-bottom:8px">
+          Service deployed and healed successfully!
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary)">
+          Risk Score: ${data.risk_score}/10 · 
+          Generated: Dockerfile, K8s Manifest, CI/CD Pipeline
+        </div>
+      </div>`;
+      } else if (data.status === 'blocked') {
+        title.innerHTML = '<span class="title-icon">🛡️</span> Deployment Blocked';
+        content.innerHTML = `
+      <div style="padding:16px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius-sm)">
+        <div style="font-size:14px;color:var(--accent-yellow);font-weight:600;margin-bottom:8px">
+          Deployment blocked — risk score ${data.risk_score}/10 exceeds threshold
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary)">
+          ${data.risk_analysis || 'Review changes and try a safer deployment strategy.'}
+        </div>
+      </div>`;
+      } else {
+        title.innerHTML = '<span class="title-icon">❌</span> Pipeline Failed';
+        content.innerHTML = `
+      <div style="padding:16px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm)">
+        <div style="font-size:14px;color:var(--accent-red);font-weight:600">Pipeline encountered an error</div>
+      </div>`;
+      }
+    }
+
+    // ── Charts ───────────────────────────────────────────
+    function initCharts() {
+      const defaults = {
+        color: '#8892a4',
+        grid: { color: '#1e2d45' },
+        font: { family: 'Inter, system-ui' }
+      };
+
+      // Overview donut
+      charts.overview = new Chart(
+        document.getElementById('chart-overview').getContext('2d'),
+        {
+          type: 'doughnut',
+          data: {
+            labels: ['Healed ✅', 'Blocked 🛡️', 'Failed ❌'],
+            datasets: [{
+              data: [0, 0, 0],
+              backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+              borderColor: '#131929',
+              borderWidth: 3,
+              hoverOffset: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            cutout: '65%',
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { color: '#8892a4', padding: 16, font: { size: 12 } }
+              }
+            }
+          }
+        }
+      );
+
+      // Risk trend
+      charts.risk = new Chart(
+        document.getElementById('chart-risk').getContext('2d'),
+        {
+          type: 'line',
+          data: {
+            labels: [],
+            datasets: [{
+              label: 'Risk Score',
+              data: [],
+              borderColor: '#8b5cf6',
+              backgroundColor: 'rgba(139,92,246,0.1)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4,
+              pointBackgroundColor: '#8b5cf6',
+              pointRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: { ticks: { color: '#8892a4' }, grid: { color: '#1e2d45' } },
+              y: { min: 0, max: 10, ticks: { color: '#8892a4' }, grid: { color: '#1e2d45' } }
+            },
+            plugins: { legend: { labels: { color: '#8892a4' } } }
+          }
+        }
+      );
+    }
+
+    function updateCharts(stats) {
+      if (charts.overview) {
+        charts.overview.data.datasets[0].data = [
+          stats.successful || 0,
+          stats.blocked || 0,
+          stats.failed || 0
+        ];
+        charts.overview.update();
+      }
+    }
+
+    async function loadAnalytics() {
+      const res = await apiFetch('/api/v1/history?limit=50');
+      if (!res) return;
+      const deps = await res.json();
+
+      // Risk distribution
+      const ctx = document.getElementById('chart-risk-dist');
+      if (ctx && !charts.riskDist) {
+        const buckets = [0, 0, 0, 0, 0];
+        deps.forEach(d => {
+          const r = d.risk_score || 0;
+          if (r <= 2) buckets[0]++;
+          else if (r <= 4) buckets[1]++;
+          else if (r <= 6) buckets[2]++;
+          else if (r <= 8) buckets[3]++;
+          else buckets[4]++;
+        });
+
+        charts.riskDist = new Chart(ctx.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: ['0-2 Low', '3-4 Med', '5-6 High', '7-8 Very High', '9-10 Critical'],
+            datasets: [{
+              label: 'Deployments',
+              data: buckets,
+              backgroundColor: ['#10b981', '#34d399', '#f59e0b', '#f97316', '#ef4444'],
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: { ticks: { color: '#8892a4' }, grid: { color: '#1e2d45' } },
+              y: { ticks: { color: '#8892a4', stepSize: 1 }, grid: { color: '#1e2d45' } }
+            },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+    }
+
+    // ── AIOps ────────────────────────────────────────────
+    async function loadDeployWindow() {
+      const res = await apiFetch('/api/v1/aiops/predict/window');
+      if (!res) return;
+      const data = await res.json();
+
+      const el = document.getElementById('deploy-window-content');
+      const windows = data.optimal_windows || [];
+
+      el.innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Current Load</div>
+      <div style="font-size:28px;font-weight:800;color:${data.current_load > 0.7 ? 'var(--accent-red)' : 'var(--accent-green)'}">
+        ${((data.current_load || 0) * 100).toFixed(0)}%
       </div>
-      <div class="risk-bar">
-        <div class="risk-fill ${risk.level}"
-             style="width:${score * 10}%"></div>
+      <div style="font-size:13px;color:var(--text-muted)">
+        Next best time: <strong style="color:var(--accent-cyan)">${data.next_best_time || 'N/A'}</strong>
       </div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">
+      Optimal Windows (24h)
+    </div>
+    ${windows.slice(0, 5).map(w => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:13px;font-family:monospace;color:var(--accent-cyan)">${w.time}</span>
+        <span class="badge ${w.quality === 'excellent' ? 'badge-green' : 'badge-blue'}">
+          ${w.quality}
+        </span>
+      </div>`).join('')}
+  `;
+    }
+
+    async function loadAgentAccuracy() {
+      const res = await apiFetch('/api/v1/aiops/agents/accuracy');
+      if (!res) return;
+      const data = await res.json();
+
+      const el = document.getElementById('agent-accuracy-content');
+      if (data.message) {
+        el.innerHTML = `<div style="color:var(--text-muted);font-size:13px;padding:16px">${data.message}</div>`;
+        return;
+      }
+
+      const br = data.agent_accuracy?.blast_radius || {};
+      const ah = data.agent_accuracy?.autohealer || {};
+
+      el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div style="text-align:center;padding:16px;background:var(--bg-secondary);border-radius:var(--radius-sm)">
+        <div style="font-size:32px;font-weight:800;color:var(--accent-blue)">${br.grade || '-'}</div>
+        <div style="font-size:12px;color:var(--text-muted)">Blast Radius</div>
+        <div style="font-size:11px;color:var(--text-secondary)">${br.accuracy || 0}% accurate</div>
+      </div>
+      <div style="text-align:center;padding:16px;background:var(--bg-secondary);border-radius:var(--radius-sm)">
+        <div style="font-size:32px;font-weight:800;color:var(--accent-green)">${ah.success_rate || 0}%</div>
+        <div style="font-size:12px;color:var(--text-muted)">AutoHealer</div>
+        <div style="font-size:11px;color:var(--text-secondary)">${ah.healed || 0} healed</div>
+      </div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Insights</div>
+    ${(data.insights || []).map(i => `
+      <div style="font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)">${i}</div>
+    `).join('')}
+  `;
+    }
+
+    async function loadAnomalyServices() {
+      await loadServices();
+    }
+
+    async function runAnomalyDetection() {
+      const service = document.getElementById('anomaly-service').value;
+      if (!service) { showToast('Select a service first', 'warn'); return; }
+
+      const res = await apiFetch(`/api/v1/aiops/anomaly/${service}`);
+      if (!res) return;
+      const data = await res.json();
+
+      const el = document.getElementById('anomaly-result');
+      const colors = { normal: 'green', medium: 'yellow', high: 'yellow', critical: 'red' };
+      const color = colors[data.overall_status] || 'blue';
+
+      el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+      <div class="badge badge-${color}" style="font-size:14px;padding:8px 16px">
+        ${data.overall_status?.toUpperCase() || 'NORMAL'}
+      </div>
+      <div style="font-size:13px;color:var(--text-secondary)">${data.recommendation || ''}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+      ${Object.entries(data.detections || {}).map(([key, det]) => `
+        <div style="padding:12px;background:var(--bg-secondary);border-radius:var(--radius-sm);border:1px solid ${det.is_anomaly ? 'rgba(239,68,68,0.3)' : 'var(--border)'}">
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">${key}</div>
+          <div class="badge ${det.is_anomaly ? 'badge-red' : 'badge-green'}" style="font-size:10px">
+            ${det.is_anomaly ? '⚠️ Anomaly' : '✅ Normal'}
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:6px">${det.reason || ''}</div>
+        </div>`).join('')}
+    </div>
+  `;
+    }
+
+    // ── Cluster ──────────────────────────────────────────
+    async function loadCluster() {
+      const res = await apiFetch('/api/v1/cluster/health');
+      if (!res) return;
+      const data = await res.json();
+
+      const el = document.getElementById('cluster-content');
+      el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+      <div style="text-align:center;padding:16px;background:var(--bg-secondary);border-radius:var(--radius-sm)">
+        <div style="font-size:28px;font-weight:800">${data.total_pods || 0}</div>
+        <div style="font-size:12px;color:var(--text-muted)">Total Pods</div>
+      </div>
+      <div style="text-align:center;padding:16px;background:var(--bg-secondary);border-radius:var(--radius-sm)">
+        <div style="font-size:28px;font-weight:800;color:var(--accent-green)">${data.ready_pods || 0}</div>
+        <div style="font-size:12px;color:var(--text-muted)">Ready</div>
+      </div>
+      <div style="text-align:center;padding:16px;background:var(--bg-secondary);border-radius:var(--radius-sm)">
+        <div style="font-size:28px;font-weight:800;color:var(--accent-red)">${data.failed_pods || 0}</div>
+        <div style="font-size:12px;color:var(--text-muted)">Failed</div>
+      </div>
+    </div>
+    ${data.note ? `<div style="color:var(--text-muted);font-size:13px;padding:12px;background:var(--bg-secondary);border-radius:var(--radius-sm)">${data.note}</div>` : ''}
+    ${(data.pods || []).slice(0, 5).map(p => `
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span>${p.name || 'unknown'}</span>
+        <span class="badge ${p.status === 'Running' ? 'badge-green' : 'badge-red'}">${p.status || 'Unknown'}</span>
+      </div>`).join('')}
+  `;
+    }
+
+    async function sendChat() {
+      const input = document.getElementById('chat-input');
+      const q = input.value.trim();
+      if (!q) return;
+
+      const messages = document.getElementById('chat-messages');
+      messages.innerHTML += `
+    <div style="margin-bottom:10px">
+      <span style="color:var(--accent-blue);font-weight:600">You:</span>
+      <span style="margin-left:8px">${q}</span>
     </div>`;
-}
+      input.value = '';
+      messages.scrollTop = messages.scrollHeight;
 
-function getStatusBadge(status) {
-  const map = {
-    pending:      `<span class="badge gray">⏳ Pending</span>`,
-    running:      `<span class="badge blue">🔄 Running</span>`,
-    orchestrated: `<span class="badge blue">🧠 Planning</span>`,
-    built:        `<span class="badge blue">🏗️ Building</span>`,
-    deployed:     `<span class="badge green">🚢 Deployed</span>`,
-    healed:       `<span class="badge green">✅ Healed</span>`,
-    blocked:      `<span class="badge orange">🛡️ Blocked</span>`,
-    failed:       `<span class="badge red">❌ Failed</span>`,
-  };
-  return map[status] || `<span class="badge gray">${status}</span>`;
-}
+      const res = await apiFetch('/api/v1/cluster/chat', {
+        method: 'POST',
+        body: JSON.stringify({ question: q })
+      });
+      if (!res) return;
+      const data = await res.json();
 
-function showToast(msg) {
-  const t = document.getElementById("toast");
-  if (!t) return;
-  t.textContent  = msg;
-  t.style.display = "block";
-  setTimeout(() => t.style.display = "none", 3000);
-}
+      messages.innerHTML += `
+    <div style="margin-bottom:16px;padding:12px;background:var(--bg-secondary);border-radius:var(--radius-sm)">
+      <span style="color:var(--accent-green);font-weight:600">🤖 Swarm:</span>
+      <div style="margin-top:6px;color:var(--text-secondary);line-height:1.6">${data.answer || 'No response'}</div>
+      ${(data.commands || []).length > 0 ? `
+        <div style="margin-top:8px">
+          ${data.commands.map(c => `
+            <code style="display:block;padding:6px 10px;background:var(--bg-primary);border-radius:4px;font-size:11px;color:var(--accent-cyan);margin-bottom:4px">${c}</code>
+          `).join('')}
+        </div>` : ''}
+    </div>`;
+      messages.scrollTop = messages.scrollHeight;
+    }
 
-// ── Charts Logic ──────────────────────────────────────────
-function initCharts() {
-  if (typeof Chart === "undefined") {
-    console.warn("Chart.js not loaded");
-    return;
-  }
-  
-  try {
-      const statusCtx = document.getElementById("statusChart");
-      if (statusCtx) {
-          statusChart = new Chart(statusCtx.getContext("2d"), {
-            type: "doughnut",
-            data: {
-              labels: ["Healed ✅", "Blocked 🛡️", "Failed ❌", "Running 🔄"],
-              datasets: [{
-                data: [0, 0, 0, 0],
-                backgroundColor: ["#3fb950", "#d29922", "#f85149", "#58a6ff"],
-                borderColor:     "#161b22",
-                borderWidth:     3
-              }]
-            },
-            options: {
-              responsive:  true,
-              plugins: {
-                legend: {
-                  position: "bottom",
-                  labels:   { color: "#8b949e", padding: 15 }
-                }
-              }
-            }
-          });
+    // ── Agent Page ───────────────────────────────────────
+    async function loadAgentPage() {
+      await loadLLMStatus();
+
+      const res = await apiFetch('/api/v1/aiops/agents/accuracy');
+      if (!res) return;
+      const data = await res.json();
+
+      const el = document.getElementById('agent-perf-content');
+      if (data.message) {
+        el.innerHTML = `<div style="color:var(--text-muted);padding:16px">${data.message}</div>`;
+        return;
       }
 
-      const riskCtx = document.getElementById("riskChart");
-      if (riskCtx) {
-          riskChart = new Chart(riskCtx.getContext("2d"), {
-            type: "line",
-            data: {
-              labels:   [],
-              datasets: [{
-                label:           "Risk Score",
-                data:            [],
-                borderColor:     "#f85149",
-                backgroundColor: "rgba(248,81,73,0.1)",
-                borderWidth:     2,
-                fill:            true,
-                tension:         0.4,
-                pointBackgroundColor: "#f85149",
-                pointRadius:          4
-              }]
-            },
-            options: {
-              responsive: true,
-              scales: {
-                x: {
-                  ticks:  { color: "#8b949e", maxTicksLimit: 6 },
-                  grid:   { color: "#21262d" }
-                },
-                y: {
-                  min:    0,
-                  max:    10,
-                  ticks:  { color: "#8b949e" },
-                  grid:   { color: "#21262d" }
-                }
-              },
-              plugins: {
-                legend: {
-                  labels: { color: "#8b949e" }
-                }
-              }
-            }
-          });
+      el.innerHTML = `
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:13px">Success Rate</span>
+        <span style="font-weight:700;color:var(--accent-green)">${data.success_rate || 0}%</span>
+      </div>
+      <div class="risk-meter">
+        <div class="risk-fill" style="width:${data.success_rate || 0}%;background:var(--accent-green)"></div>
+      </div>
+    </div>
+    <div style="padding:12px;background:var(--bg-secondary);border-radius:var(--radius-sm)">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Total: ${data.total_deployments || 0} deployments</div>
+      ${(data.insights || []).map(i => `
+        <div style="font-size:12px;padding:4px 0;color:var(--text-secondary)">${i}</div>
+      `).join('')}
+    </div>
+  `;
+    }
+
+    // ── Helpers ──────────────────────────────────────────
+    function statusBadge(status) {
+      const map = {
+        healed: 'badge-green',
+        blocked: 'badge-yellow',
+        failed: 'badge-red',
+        running: 'badge-blue',
+        pending: 'badge-gray',
+        orchestrated: 'badge-blue',
+        built: 'badge-purple',
+        deployed: 'badge-cyan'
+      };
+      return `<span class="badge ${map[status] || 'badge-gray'}">${status || 'unknown'}</span>`;
+    }
+
+    function riskBadge(score) {
+      const s = score || 0;
+      const cls = s <= 3 ? 'badge-green' : s <= 6 ? 'badge-yellow' : 'badge-red';
+      return `<span class="badge ${cls}">${s.toFixed(1)}/10</span>`;
+    }
+
+    function formatTime(ts) {
+      if (!ts) return '-';
+      try {
+        return new Date(ts).toLocaleString('en-IN', {
+          timeZone: 'Asia/Kolkata',
+          day: '2-digit',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch { return ts; }
+    }
+
+    function showToast(msg, type = 'info') {
+      const colors = {
+        success: 'var(--accent-green)',
+        error: 'var(--accent-red)',
+        warn: 'var(--accent-yellow)',
+        info: 'var(--accent-blue)'
+      };
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.style.borderLeftColor = colors[type] || colors.info;
+      toast.style.borderLeftWidth = '3px';
+      toast.textContent = msg;
+      document.getElementById('toast-container').appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    // ── Global WebSocket ──────────────────────────────────────
+    function connectGlobalWebSocket() {
+      if (globalWS) {
+        try { globalWS.close(); } catch (e) { }
       }
-  } catch(e) {
-      console.error("Chart init error:", e);
-  }
-}
 
-function updateCharts(historyData) {
-  if (!statusChart || !riskChart || !Array.isArray(historyData)) return;
+      const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      let host = location.host;
+      if (!host) host = 'localhost:8080';
 
-  try {
-      // Status chart
-      const healed  = historyData.filter(d => d.status === "healed").length;
-      const blocked = historyData.filter(d => d.status === "blocked").length;
-      const failed  = historyData.filter(d => d.status === "failed").length;
-      const running = historyData.filter(d =>
-        !["healed","blocked","failed"].includes(d.status)
-      ).length;
+      const wsUrl = `${wsProto}//${host}/ws/events?token=${authToken}`;
+      globalWS = new WebSocket(wsUrl);
 
-      statusChart.data.datasets[0].data = [healed, blocked, failed, running];
-      statusChart.update();
+      const dot = document.querySelector('.status-dot');
 
-      // Risk trend chart
-      const recent  = historyData.slice(0, 10).reverse();
-      riskChart.data.labels   = recent.map((_, i) => `#${i+1}`);
-      riskChart.data.datasets[0].data = recent.map(d => d.risk_score || 0);
-      riskChart.update();
-  } catch(e) {
-      console.error("Chart update error:", e);
-  }
-}
-</script>
+      globalWS.onopen = () => {
+        if (dot) {
+          dot.style.background = 'var(--accent-green)';
+          dot.style.boxShadow = '0 0 10px var(--accent-green)';
+          dot.className = 'status-dot';
+        }
+      };
 
+      globalWS.onmessage = (e) => {
+        try {
+          const event = JSON.parse(e.data);
+          if (event.type === 'heartbeat') return;
+
+          console.log('Global Event:', event);
+          if (event.type === 'deploy.started' || event.type === 'deploy.completed' || event.type === 'deploy.failed') {
+            loadRecentHistory();
+            loadStats();
+            if (currentId && (event.data?.deployment_id === currentId || event.data?.id === currentId)) {
+              pollStatus();
+            }
+          }
+        } catch (err) { }
+      };
+
+      globalWS.onclose = () => {
+        if (dot) {
+          dot.style.background = 'var(--accent-red)';
+          dot.style.boxShadow = '0 0 10px var(--accent-red)';
+        }
+        setTimeout(connectGlobalWebSocket, 5000);
+      };
+    }
+
+    // ── Scheduler JS ─────────────────────────────────────────
+    async function loadSchedules() {
+      try {
+        const res = await apiFetch('/api/v1/scheduler/list');
+        if (!res) return;
+        const data = await res.json();
+
+        const tbody = document.getElementById('schedules-list');
+        if (!tbody) return;
+        if (data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" style="color:var(--text-muted); text-align:center; padding:20px;">No scheduled tasks found.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = data.map(job => {
+          const targetTime = job.scheduled_at ? formatTime(job.scheduled_at) : 'N/A';
+          const statusClass = job.status === 'pending' ? 'badge-yellow' : 'badge-green';
+          const cancelBtn = job.status === 'pending' ?
+            `<button class="btn btn-secondary" onclick="cancelSchedule(${job.id})" style="padding:4px 8px; font-size:10px; border-radius:var(--radius-sm);">Cancel</button>` :
+            '—';
+          return `
+        <tr>
+          <td><strong>${job.service_name}</strong></td>
+          <td>${targetTime}</td>
+          <td><code>${job.cron_expr || 'None'}</code></td>
+          <td><span class="badge ${statusClass}">${job.status.toUpperCase()}</span></td>
+          <td>${cancelBtn}</td>
+        </tr>
+      `;
+        }).join('');
+      } catch (e) {
+        console.error("Failed to load schedules:", e);
+      }
+    }
+
+    async function scheduleDeployment() {
+      const service = document.getElementById('sched-service').value;
+      const datetimeVal = document.getElementById('sched-datetime').value;
+      const cron = document.getElementById('sched-cron').value.trim();
+
+      if (!service) {
+        showToast('⚠️ Please select a service for scheduling', 'warn');
+        return;
+      }
+
+      if (!datetimeVal && !cron) {
+        showToast('⚠️ Specify execution time or cron expression', 'warn');
+        return;
+      }
+
+      let isoTime = null;
+      if (datetimeVal) {
+        isoTime = new Date(datetimeVal).toISOString();
+      }
+
+      try {
+        const res = await apiFetch('/api/v1/scheduler/schedule', {
+          method: 'POST',
+          body: JSON.stringify({
+            service_name: service,
+            repo_url: 'https://github.com/GoogleCloudPlatform/microservices-demo.git',
+            changes: 'Scheduled deployment task',
+            scheduled_at: isoTime,
+            cron_expr: cron || null
+          })
+        });
+
+        if (res && res.ok) {
+          showToast('📅 Deployment scheduled successfully!', 'success');
+          document.getElementById('sched-datetime').value = '';
+          document.getElementById('sched-cron').value = '';
+          loadSchedules();
+        } else {
+          const err = await res.json();
+          showToast(`❌ Error: ${err.detail || 'Failed to schedule'}`, 'error');
+        }
+      } catch (e) {
+        showToast(`❌ Connection error: ${e.message}`, 'error');
+      }
+    }
+
+    async function cancelSchedule(jobId) {
+      if (!confirm(`Are you sure you want to cancel scheduled task #${jobId}?`)) return;
+      try {
+        const res = await apiFetch(`/api/v1/scheduler/cancel/${jobId}`, {
+          method: 'DELETE'
+        });
+        if (res && res.ok) {
+          showToast('🚫 Scheduled task cancelled.', 'success');
+          loadSchedules();
+        } else {
+          showToast('❌ Failed to cancel task.', 'error');
+        }
+      } catch (e) {
+        console.error("Failed to cancel schedule:", e);
+      }
+    }
+
+    // ── Service Graph JS ──────────────────────────────────────
+
+    function renderServiceGraph() {
+      const container = document.getElementById("svg-container");
+      if (!container) return;
+
+      let svgHtml = `<svg width="100%" height="100%" style="display:block;">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#1e2d45" />
+      </marker>
+      <marker id="arrow-highlight" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#3b82f6" />
+      </marker>
+      <marker id="arrow-upstream" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444" />
+      </marker>
+      <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="4" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+    </defs>
+  `;
+
+      // Render Links
+      Object.keys(serviceDependencies).forEach(src => {
+        const srcPos = nodePositions[src];
+        if (!srcPos) return;
+
+        serviceDependencies[src].forEach(dst => {
+          const dstPos = nodePositions[dst];
+          if (!dstPos) return;
+
+          svgHtml += `<line 
+        id="link-${src}-${dst}" 
+        x1="${srcPos.x}" y1="${srcPos.y}" 
+        x2="${dstPos.x}" y2="${dstPos.y}" 
+        stroke="#1e2d45" stroke-width="1.5" 
+        marker-end="url(#arrow)" 
+        style="transition: stroke 0.3s, stroke-width 0.3s;" />`;
+        });
+      });
+
+      // Render Nodes
+      Object.keys(nodePositions).forEach(name => {
+        const pos = nodePositions[name];
+
+        svgHtml += `
+      <g id="node-${name}" class="graph-node" 
+         onmouseover="highlightNode('${name}')" 
+         onmouseout="unhighlightNodes()" 
+         style="cursor:pointer;">
+        <rect x="${pos.x - 70}" y="${pos.y - 18}" width="140" height="36" rx="18" fill="#3b82f6" opacity="0" id="glow-${name}" filter="url(#glow)" style="transition: opacity 0.3s;"/>
+        <rect x="${pos.x - 70}" y="${pos.y - 18}" width="140" height="36" rx="18" fill="#0f1629" stroke="#1e2d45" stroke-width="2" id="rect-${name}" style="transition: stroke 0.3s, fill 0.3s;"/>
+        <text x="${pos.x}" y="${pos.y + 4}" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600" font-family="var(--font)">${name}</text>
+        <circle cx="${pos.x - 55}" cy="${pos.y}" r="4" fill="#10b981" />
+      </g>
+    `;
+      });
+
+      svgHtml += `</svg>`;
+      container.innerHTML = svgHtml;
+    }
+
+    function highlightNode(name) {
+      document.querySelectorAll('line').forEach(l => {
+        l.setAttribute('stroke', '#1e2d45');
+        l.setAttribute('stroke-width', '1.5');
+        l.style.markerEnd = 'url(#arrow)';
+      });
+      document.querySelectorAll('rect').forEach(r => {
+        if (r.id.startsWith('rect-')) {
+          r.setAttribute('stroke', '#1e2d45');
+        }
+      });
+
+      const selfRect = document.getElementById(`rect-${name}`);
+      if (selfRect) selfRect.setAttribute('stroke', '#3b82f6');
+
+      const glow = document.getElementById(`glow-${name}`);
+      if (glow) glow.style.opacity = '0.3';
+
+      if (serviceDependencies[name]) {
+        serviceDependencies[name].forEach(dst => {
+          const link = document.getElementById(`link-${name}-${dst}`);
+          if (link) {
+            link.setAttribute('stroke', '#3b82f6');
+            link.setAttribute('stroke-width', '3');
+            link.style.markerEnd = 'url(#arrow-highlight)';
+          }
+          const dstRect = document.getElementById(`rect-${dst}`);
+          if (dstRect) dstRect.setAttribute('stroke', '#10b981');
+        });
+      }
+
+      Object.keys(serviceDependencies).forEach(src => {
+        if (serviceDependencies[src].includes(name)) {
+          const link = document.getElementById(`link-${src}-${name}`);
+          if (link) {
+            link.setAttribute('stroke', '#ef4444');
+            link.setAttribute('stroke-width', '3');
+            link.style.markerEnd = 'url(#arrow-upstream)';
+          }
+          const srcRect = document.getElementById(`rect-${src}`);
+          if (srcRect) srcRect.setAttribute('stroke', '#ef4444');
+        }
+      });
+    }
+
+    function unhighlightNodes() {
+      document.querySelectorAll('line').forEach(l => {
+        l.setAttribute('stroke', '#1e2d45');
+        l.setAttribute('stroke-width', '1.5');
+        l.style.markerEnd = 'url(#arrow)';
+      });
+      document.querySelectorAll('rect').forEach(r => {
+        if (r.id.startsWith('rect-')) {
+          r.setAttribute('stroke', '#1e2d45');
+        } else if (r.id.startsWith('glow-')) {
+          r.style.opacity = '0';
+        }
+      });
+    }
+
+    // ── Settings JS ─────────────────────────────────────────
+    function loadSettings() {
+      const el = document.getElementById('settings-content');
+      if (!el) return;
+      el.innerHTML = `
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+      <div>
+        <h3 style="font-size:14px; margin-bottom:12px; color:var(--accent-blue);">System Parameters</h3>
+        <div style="display:flex; flex-direction:column; gap:10px; font-size:13px;">
+          <div style="display:flex; justify-content:space-between; padding-bottom:8px; border-bottom:1px solid var(--border);">
+            <span style="color:var(--text-secondary);">Control Plane Version</span>
+            <span style="font-family:monospace;">v2.0.0</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding-bottom:8px; border-bottom:1px solid var(--border);">
+            <span style="color:var(--text-secondary);">Environment</span>
+            <span class="badge badge-blue">Production</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding-bottom:8px; border-bottom:1px solid var(--border);">
+            <span style="color:var(--text-secondary);">Secrets Scanner Status</span>
+            <span class="badge badge-green">Enabled</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding-bottom:8px; border-bottom:1px solid var(--border);">
+            <span style="color:var(--text-secondary);">SLO Guardrails Status</span>
+            <span class="badge badge-green">Enabled</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3 style="font-size:14px; margin-bottom:12px; color:var(--accent-blue);">Database & Storage</h3>
+        <div style="display:flex; flex-direction:column; gap:10px; font-size:13px;">
+          <div style="display:flex; justify-content:space-between; padding-bottom:8px; border-bottom:1px solid var(--border);">
+            <span style="color:var(--text-secondary);">Database Type</span>
+            <span style="font-family:monospace;">SQLite</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding-bottom:8px; border-bottom:1px solid var(--border);">
+            <span style="color:var(--text-secondary);">Task Queue Broker</span>
+            <span style="font-family:monospace;">Redis</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding-bottom:8px; border-bottom:1px solid var(--border);">
+            <span style="color:var(--text-secondary);">CELERY_BROKER_URL</span>
+            <span style="color:var(--text-secondary); font-family:monospace;">redis://localhost:6379/0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+    }
+  </script>
 </body>
+
 </html>

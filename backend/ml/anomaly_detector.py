@@ -180,8 +180,18 @@ class AnomalyDetector:
             Deployment.created_at >= one_hour_ago
         ).scalar()
 
-        # Get historical hourly counts
-        hourly_history = [2, 1, 3, 1, 2, 4, 1, 2]  # simplified
+        # Get historical hourly counts (real data from DB)
+        hourly_history = []
+        for h in range(8, 0, -1):
+            h_start = (now - timedelta(hours=h)).replace(tzinfo=None)
+            h_end   = (now - timedelta(hours=h - 1)).replace(tzinfo=None)
+            h_count = db.query(func.count(Deployment.id)).filter(
+                Deployment.created_at >= h_start,
+                Deployment.created_at < h_end,
+            ).scalar()
+            hourly_history.append(h_count)
+        if not any(hourly_history):
+            hourly_history = [2, 1, 3, 1, 2, 4, 1, 2]  # fallback seed
 
         # Run all detections
         risk_anomaly  = self.detect_risk_anomaly(recent_risks, current_risk)

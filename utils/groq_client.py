@@ -13,11 +13,31 @@ PROVIDERS = [
     {"name": "OpenCode","enabled": bool(os.getenv("OPENCODE_API_KEY")),"key": os.getenv("OPENCODE_API_KEY", "")},
     {"name": "Mistral", "enabled": bool(os.getenv("MISTRAL_API_KEY")), "key": os.getenv("MISTRAL_API_KEY", "")},
     {"name": "Cohere",  "enabled": bool(os.getenv("COHERE_API_KEY")),  "key": os.getenv("COHERE_API_KEY", "")},
+    {"name": "NVIDIA",  "enabled": bool(os.getenv("NVIDIA_API_KEY")),  "key": os.getenv("NVIDIA_API_KEY", "")},
 ]
 
 provider_failures  = {p["name"]: 0 for p in PROVIDERS}
 provider_last_fail = {p["name"]: 0 for p in PROVIDERS}
 COOLDOWN_SECONDS   = 60
+
+# ── NVIDIA NIM ────────────────────────────────────────────
+def ask_nvidia(prompt: str, system: str = "") -> str:
+    """NVIDIA NIM API — OpenAI-compatible"""
+    response = requests.post(
+        "https://integrate.api.nvidia.com/v1/chat/completions",
+        headers = {
+            "Authorization": f"Bearer {os.getenv('NVIDIA_API_KEY')}",
+            "Content-Type":  "application/json"
+        },
+        json = {
+            "model":      os.getenv("NVIDIA_MODEL", "meta/llama-3.1-70b-instruct"),
+            "messages":   _build_messages(prompt, system),
+            "max_tokens": 1500
+        },
+        timeout = 60
+    )
+    response.raise_for_status()
+    return response.json()["choices"][0]["message"]["content"]
 
 # ── Groq ──────────────────────────────────────────────────
 def ask_groq(prompt: str, system: str = "") -> str:
@@ -103,6 +123,7 @@ def _build_messages(prompt: str, system: str = "") -> list:
     return messages
 
 PROVIDER_FUNCTIONS = {
+    "NVIDIA":  ask_nvidia,
     "Groq":    ask_groq,
     "OpenCode":ask_opencode,
     "Mistral": ask_mistral,

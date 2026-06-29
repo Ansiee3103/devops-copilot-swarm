@@ -1,150 +1,193 @@
-# 🚀 DevOps Copilot Swarm
+<div align="center">
 
-> Risk-Aware Deployment & Self-Healing Control Plane
+# 🤖 DevOps Copilot Swarm
 
-A production-grade multi-agent AI system that makes microservice deployments
-intelligent, risk-aware, and autonomous.
+**Risk-Aware Deployment & Self-Healing Control Plane**
 
-![Python](https://img.shields.io/badge/python-3.12-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green)
-![AWS](https://img.shields.io/badge/AWS-EC2%20%7C%20RDS%20%7C%20ECR-orange)
-![License](https://img.shields.io/badge/license-MIT-blue)
+[![Tests](https://github.com/YOUR_USERNAME/devops-copilot-swarm/actions/workflows/deploy.yml/badge.svg)](https://github.com/YOUR_USERNAME/devops-copilot-swarm/actions)
+[![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![AWS](https://img.shields.io/badge/deployed-AWS-orange.svg)](https://aws.amazon.com)
 
-## ✨ Features
+*A production-grade multi-agent AI system that makes microservice deployments
+intelligent, risk-aware, and autonomous.*
 
-- 🧠 **Orchestrator Agent** — Plans deployments using GitHub context
-- 🏗️ **Builder Agent** — Generates production Dockerfiles, K8s manifests, CI/CD
-- 🔍 **Blast Radius Agent** — Predicts risk score and blocks dangerous deploys
-- 🔧 **AutoHealer Agent** — Detects and fixes failures autonomously
-- 🤖 **Multi-LLM Routing** — Groq → OpenCode → Mistral → Cohere failover
-- 📊 **ML Risk Model** — Learns from deployment history
-- 💰 **Cost Intelligence** — Estimates cloud costs per deployment
-- 🔒 **Compliance Engine** — SOC2, ISO27001, HIPAA checks
-- 🔌 **Plugin System** — Extensible with Slack, PagerDuty, Datadog
+[Live Demo](https://13.126.249.86.nip.io/dashboard/index.html) •
+[API Docs](https://13.126.249.86.nip.io/docs) •
+[Report Bug](https://github.com/YOUR_USERNAME/devops-copilot-swarm/issues)
+
+</div>
+
+---
+
+## ✨ What It Does
+
+DevOps Copilot Swarm deploys your microservices **intelligently**:
+
+1. **Analyzes** your GitHub repo and plans the deployment
+2. **Generates** production Dockerfiles, K8s manifests, and CI/CD pipelines
+3. **Predicts** blast radius and blocks risky deployments automatically
+4. **Heals** failures autonomously without human intervention
+5. **Learns** from every deployment to get smarter over time
 
 ## 🏗️ Architecture
 
-┌─────────────────────────────────────┐
+                ┌─────────────────────┐
+                │   Dashboard (HTTPS) │
+                └──────────┬──────────┘
+                           │
+                ┌──────────▼──────────┐
+                │   FastAPI Backend   │
+                │  JWT + RBAC + Redis │
+                └──┬──────────────┬───┘
+                   │              │
+          ┌────────▼──┐    ┌──────▼────────┐
+          │PostgreSQL │    │  AI Agent Pool |
+          │  (RDS)    │    │  ┌───────────┐ |
+          └───────────┘    │  │Orchestrat.│ |
+                           │  │Builder    │ │
+                           │  │BlastRadius│ │
+                           │  │AutoHealer │ │
+                           │  └───────────┘ │
+                           └────────────────┘
 
-│        Dashboard (HTTPS)            │
+## 🤖 AI Agents
 
-└──────────────┬──────────────────────┘
+| Agent                | Role                            |  Output                     |
+|---------------------|--------------------------------- |---------------------------- |
+| 🧠 **Orchestrator** | Analyzes repo, plans deployment  | Deployment plan            |
+| 🏗️ **Builder**      | Generates production configs     | Dockerfile, K8s, CI/CD     |
+| 🔍 **Blast Radius** | Predicts risk & impact           | Risk score 0-10            |
+| 🔧 **AutoHealer**   | Detects & fixes failures         | Healing report             |
 
-│
+## ⚡ Performance
 
-┌──────────────▼──────────────────────┐
+Load Test Results (10 concurrent users, 5 minutes):
 
-│    FastAPI Backend (EC2 t3.small)   │
+✅ Total Requests:  5,210
 
-│    JWT Auth + RBAC + Rate Limiting  │
+✅ Error Rate:      0.00%
 
-└──────┬───────────────┬──────────────┘
+✅ Avg Response:    147ms
 
-│               │
+✅ P95 Response:    599ms
 
-┌──────▼──────┐  ┌─────▼────────────┐
-
-│  PostgreSQL  │  │  AI Agent Pool   │
-
-│  (RDS)      │  │  Groq/Mistral/   │
-
-└─────────────┘  │  Cohere/OpenCode │
-
-                 └──────────────────┘
+✅ Throughput:      17+ req/sec
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Python 3.12+
-- Docker
-- AWS CLI configured
-- API keys: Groq, Mistral, Cohere
+- Docker Desktop
+- At least one LLM API key (Groq is free)
 
-### Local Development
+### Setup
 
 ```bash
-# Clone repo
-git clone https://github.com/ansiee3103/devops-copilot-swarm
+# Clone
+git clone https://github.com/YOUR_USERNAME/devops-copilot-swarm
 cd devops-copilot-swarm
 
-# Setup
+# Install
 python -m venv venv
-venv\Scripts\activate      # Windows
+venv\Scripts\activate       # Windows
 pip install -r requirements.txt
 
 # Configure
 cp .env.example .env
-# Edit .env with your API keys
+# Add your GROQ_API_KEY to .env (free at console.groq.com)
 
-# Start services
-docker start devops-postgres devops-redis
+# Start databases
+docker run -d --name devops-postgres \
+  -e POSTGRES_USER=devops \
+  -e POSTGRES_PASSWORD=devops123 \
+  -e POSTGRES_DB=devops_swarm \
+  -p 5432:5432 postgres:15-alpine
+
+docker run -d --name devops-redis \
+  -p 6379:6379 redis:7-alpine
 
 # Run
 python run.py
 ```
 
-Open: `http://localhost:8080/dashboard/index.html`
+Open: http://localhost:8080/dashboard/index.html
 
-### Production (AWS)
+Login: `admin` / `admin123`
+
+### Docker Compose (Recommended)
 
 ```bash
-# Deploy to AWS
-./aws/deploy.sh
-
-# Or push to main branch for auto-deploy via GitHub Actions
-git push origin main
+cp .env.example .env
+# Edit .env with your API keys
+docker-compose up -d
 ```
 
-## 🌐 Live Demo
+## 🌐 Deploy to AWS (Free Tier)
 
-Dashboard: `https://<EC2_PUBLIC_IP>.nip.io/dashboard/index.html`
-
-API Docs:  `https://<EC2_PUBLIC_IP>.nip.io/docs`
-
-Health:    `https://<EC2_PUBLIC_IP>.nip.io/health`
-
-Login:     `admin` / `admin123`
-
-## 📊 API Overview
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/auth/login` | Login |
-| POST | `/api/v1/deploy` | Trigger deployment |
-| GET | `/api/v1/status/{id}` | Deployment status |
-| GET | `/api/v1/history` | Deployment history |
-| GET | `/api/v1/stats` | Analytics |
-| GET | `/api/v1/cluster/health` | K8s health |
-| POST | `/api/v1/cluster/chat` | NL cluster queries |
-| GET | `/api/v1/ml/predict` | Risk prediction |
-| GET | `/api/v1/cost/estimate` | Cost estimate |
-| POST | `/api/v1/compliance/check` | Compliance audit |
+See [AWS Deployment Guide](docs/AWS_DEPLOYMENT.md)
 
 ## 🧪 Testing
 
 ```bash
+# Unit tests
 pytest tests/ -v
+
+# Performance tests
+pytest tests/load/performance_test.py -v -s
+
+# Load tests (requires k6)
+k6 run tests/load/k6_test.js
 ```
 
-## 🏢 SaaS Plans
+## 📡 API Reference
 
-| Plan | Price | Deployments |
-|------|-------|-------------|
-| Free | $0/mo | 10/month    |
-| Pro | $29/mo | 100/month   |
-| Enterprise | $99/mo | Unlimited |
+| Method | Endpoint                            | Description        |
+|--------|-------------------------------------|--------------------|
+| POST   | `/auth/login`                       | Authenticate       |
+| POST   | `/api/v1/deploy`                    | Trigger deployment |
+| GET    | `/api/v1/status/{id}`               | Real-time status   |
+| GET    | `/api/v1/history`                   | Deployment history |
+| GET    | `/api/v1/stats`                     | Analytics          |
+| GET    | `/api/v1/aiops/anomaly/{service}`   | Anomaly detection  |
+| POST   | `/api/v1/aiops/confidence`          | Confidence score   |
+| GET    | `/api/v1/aiops/predict/window`      | Best deploy time   |
+| POST   | `/api/v1/cluster/chat`              | NL cluster queries |
+
+Full docs: https://13.126.249.86.nip.io/docs
+
+## 🔌 Integrations
+
+- ✅ **Slack** — Deployment alerts
+- ✅ **Email** — Gmail SMTP
+- ✅ **PagerDuty** — On-call routing
+- ✅ **Microsoft Teams** — Enterprise notifications
+- ✅ **GitHub** — Source analysis
+- ✅ **Kubernetes** — Multi-cluster support
 
 ## 🛠️ Tech Stack
 
-- **Backend:** FastAPI, SQLAlchemy, Celery
-- **Database:** PostgreSQL (RDS), Redis
-- **AI:** Groq, Mistral, Cohere, OpenCode
-- **Cloud:** AWS EC2, RDS, ECR
-- **ML:** scikit-learn, Gradient Boosting
-- **Monitoring:** CloudWatch, Prometheus
-- **CI/CD:** GitHub Actions
+| Layer         | Technology                                             |
+|---------------|--------------------------------------------------------|
+| Backend       | FastAPI, Python 3.12                                   |
+| Database      | PostgreSQL, Redis                                      |
+| AI/ML         | Groq, Mistral, Cohere, scikit-learn                    |
+| Cloud         | AWS EC2, RDS, ECR, CloudWatch                          |
+| DevOps        | Docker, GitHub Actions                                 |
+| Security      | JWT, bcrypt, RBAC                                      |
+| Testing       | pytest, k6                                             |
 
 ## 📄 License
 
 MIT License — see [LICENSE](LICENSE)
+
+## 🙏 Acknowledgments
+
+- [Google Online Boutique](https://github.com/GoogleCloudPlatform/microservices-demo) — Demo microservices
+- [FastAPI](https://fastapi.tiangolo.com) — Web framework
+- [Groq](https://groq.com) — LLM inference
+- [Anthropic Claude](https://anthropic.com) — AI assistance during development
+- [Antigravity IDE](https://antigravity.com) — AI assistance during development
+

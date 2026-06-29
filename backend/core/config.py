@@ -6,13 +6,13 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # ── App ───────────────────────────────────────────────
     APP_NAME:        str  = "DevOps Copilot Swarm"
-    APP_VERSION:     str  = "2.0.0"
+    APP_VERSION:     str  = "3.0.0"
     APP_ENV:         str  = "production"
     DEBUG:           bool = False
 
     # ── API ───────────────────────────────────────────────
     API_V1_PREFIX:   str  = "/api/v1"
-    ALLOWED_ORIGINS: list = ["*"]
+    ALLOWED_ORIGINS: list = ["http://localhost:8080", "http://localhost:3000"]
 
     # ── Database ──────────────────────────────────────────
     DATABASE_URL:    str  = "sqlite:///database/devops.db"
@@ -31,8 +31,10 @@ class Settings(BaseSettings):
     MISTRAL_API_KEY:   str = ""
     COHERE_API_KEY:    str = ""
     OPENCODE_API_KEY:  str = ""
+    NVIDIA_API_KEY:    str = ""
     GROQ_MODEL:        str = "llama-3.3-70b-versatile"
     OPENCODE_MODEL:    str = "deepseek-v4-flash-free"
+    NVIDIA_MODEL:      str = "meta/llama-3.1-70b-instruct"
     LLM_MAX_TOKENS:    int = 1500
     LLM_MAX_RETRIES:   int = 3
     LLM_TIMEOUT:       int = 60
@@ -55,6 +57,15 @@ class Settings(BaseSettings):
 
     # ── Monitoring ────────────────────────────────────────
     METRICS_ENABLED: bool = True
+
+    # ── GitHub WebHooks ───────────────────────────────────
+    GITHUB_WEBHOOK_SECRET: str = ""
+
+    # ── Scalar Docs ───────────────────────────────────────
+    SCALAR_AGENT_KEY:      str = ""
+
+    # ── Kubernetes Advanced ───────────────────────────────
+    K8S_ROLLOUT_TIMEOUT:   int = 300
 
     class Config:
         env_file       = ".env"

@@ -6,19 +6,33 @@ from backend.core.logger import get_logger
 
 logger = get_logger("cache")
 
+import time
+_redis_last_attempt = 0
+_redis_client = None
+
 def get_redis():
-    try:
-        import redis
-        from backend.core.config import settings
-        return redis.Redis(
-            host             = settings.REDIS_HOST,
-            port             = settings.REDIS_PORT,
-            db               = 0,
-            decode_responses = True,
-            socket_timeout   = 2
-        )
-    except:
-        return None
+    global _redis_client, _redis_last_attempt
+    if _redis_client is None:
+        now = time.time()
+        if _redis_last_attempt + 60 > now:
+            return None
+        _redis_last_attempt = now
+        try:
+            import redis
+            from backend.core.config import settings
+            r = redis.Redis(
+                host             = settings.REDIS_HOST,
+                port             = settings.REDIS_PORT,
+                db               = 0,
+                decode_responses = True,
+                socket_timeout   = 2
+            )
+            r.ping()
+            _redis_client = r
+        except Exception as e:
+            logger.warning(f"⚠️ Redis not available for Cache: {e}")
+            _redis_client = None
+    return _redis_client
 
 def _safe_serialize(obj) -> str:
     """Serialize only JSON-safe types — skip DB sessions etc."""

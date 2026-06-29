@@ -7,11 +7,11 @@ on:
     branches: [main]
 
 env:
-  AWS_REGION:  ap-south-1
-  ECR_REPO:    devops-copilot-swarm
-  ACCOUNT_ID:  006600132909
-  EC2_USER:    ubuntu
-  APP_URL:     https://13.126.249.86.nip.io
+  AWS_REGION: ap-south-1
+  ECR_REPO: devops-copilot-swarm
+  ACCOUNT_ID: 006600132909
+  EC2_USER: ubuntu
+  APP_URL: https://13.126.249.86.nip.io
 
 jobs:
   # ── Job 1: Tests ──────────────────────────────────────

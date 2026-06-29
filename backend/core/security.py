@@ -58,10 +58,11 @@ def decode_token(token: str) -> Optional[dict]:
         return None
 
 # ── Role-Based Permissions ────────────────────────────────
+from backend.core.rbac import ROLES
+
 ROLE_PERMISSIONS: dict[str, set[str]] = {
-    "admin":    {"read", "deploy", "admin", "manage_users", "clear_history"},
-    "deployer": {"read", "deploy", "clear_history"},
-    "viewer":   {"read"},
+    role: set(data["permissions"])
+    for role, data in ROLES.items()
 }
 
 def require_permission(permission: str):

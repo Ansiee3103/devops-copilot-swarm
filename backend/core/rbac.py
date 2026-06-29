@@ -11,17 +11,17 @@ ROLES = {
         "description": "Can view deployments and history"
     },
     "deployer": {
-        "permissions": ["read", "deploy"],
+        "permissions": ["read", "deploy", "clear_history"],
         "description": "Can view and trigger deployments"
     },
     "senior_deployer": {
-        "permissions": ["read", "deploy", "approve"],
+        "permissions": ["read", "deploy", "approve", "clear_history"],
         "description": "Can approve high-risk deployments"
     },
     "admin": {
         "permissions": ["read", "deploy", "approve",
                         "manage_users", "clear_history",
-                        "manage_org", "view_billing"],
+                        "manage_org", "view_billing", "admin"],
         "description": "Full access"
     }
 }

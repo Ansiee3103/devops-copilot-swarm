@@ -11,8 +11,7 @@ Base = declarative_base()
 if settings.DATABASE_URL.startswith("sqlite"):
     engine = create_engine(
         settings.DATABASE_URL,
-        connect_args = {"check_same_thread": False},
-        poolclass    = StaticPool
+        connect_args = {"check_same_thread": False, "timeout": 15}
     )
 else:
     engine = create_engine(
@@ -31,6 +30,8 @@ def create_tables():
     from backend.models.deployment import Deployment
     from backend.models.user       import User
     from backend.models.audit      import AuditLog
+    from backend.services.incident_service import Incident
+    from backend.services.scheduler_service import ScheduledDeployment
     os.makedirs("database", exist_ok=True)
     Base.metadata.create_all(bind=engine)
 

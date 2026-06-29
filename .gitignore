@@ -1,40 +1,61 @@
-# Virtual Environment
-venv/
-.venv/
-env/
-ENV/
-
-# Python Cache
-__pycache__/
-*.py[cod]
-*$py.class
-
-# IDE Configs
-.vscode/
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.swp
-
-# Sensitive Files
+# ── Secrets (NEVER commit these) ──────────────────────
 .env
 *.pem
 *.key
-devops-swarm-key.pem
+*.p12
+secrets/
 
-# Database and Logs
+# ── Python ────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Database ──────────────────────────────────────────
 database/*.db
-database/devops.db
-database/devops_swarm.db
-database/test.db
+database/*.sqlite
+*.db
+
+# ── Logs ──────────────────────────────────────────────
 logs/
 *.log
 
-# Project Outputs and Cache
+# ── Generated Outputs ─────────────────────────────────
 outputs/
+
+# ── ML Models ─────────────────────────────────────────
+models/*.joblib
+models/*.pkl
+
+# ── AWS ───────────────────────────────────────────────
+*.tfstate
+*.tfvars
+.terraform/
+
+# ── IDE ───────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+
+# ── OS ────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Docker ────────────────────────────────────────────
+docker-compose.override.yml
+
+# ── Test Artifacts ────────────────────────────────────
 .pytest_cache/
-.coverage
 htmlcov/
-.ipynb_checkpoints/
+.coverage
+tests/load/results.json
+
+# ── k6 ────────────────────────────────────────────────
+k6_results/

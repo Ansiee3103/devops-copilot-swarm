@@ -225,7 +225,7 @@ def send_all_alerts(
     healing_report: str,
     affected:       list
 ) -> dict:
-    """Send both email and slack alerts"""
+    """Send all alerts: email, slack, pagerduty, and teams"""
 
     print("\n📣 Sending alerts...")
 
@@ -238,7 +238,27 @@ def send_all_alerts(
         risk_score, healing_report, affected
     )
 
+    try:
+        from integrations.pagerduty_client import send_pagerduty_alert
+        pd_result = send_pagerduty_alert(
+            service_name, status,
+            risk_score, healing_report, affected
+        )
+    except Exception as e:
+        pd_result = {"success": False, "error": str(e)}
+
+    try:
+        from integrations.teams_client import send_teams_alert
+        teams_result = send_teams_alert(
+            service_name, status,
+            risk_score, healing_report, affected
+        )
+    except Exception as e:
+        teams_result = {"success": False, "error": str(e)}
+
     return {
         "email": email_result,
-        "slack": slack_result
+        "slack": slack_result,
+        "pagerduty": pd_result,
+        "teams": teams_result
     }

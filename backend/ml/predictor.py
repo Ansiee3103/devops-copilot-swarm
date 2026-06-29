@@ -1,4 +1,3 @@
-import numpy as np
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict
 from backend.core.logger import get_logger
