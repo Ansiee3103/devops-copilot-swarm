@@ -10,7 +10,7 @@ const apiTime      = new Trend('api_duration');
 const deployCount  = new Counter('deployments_triggered');
 
 // ── Config ────────────────────────────────────────────
-const BASE_URL = __ENV.BASE_URL || 'https://13.126.249.86.nip.io';
+const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 
 // ── Test Scenarios ────────────────────────────────────
 export const options = {

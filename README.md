@@ -4,7 +4,7 @@
 
 **Risk-Aware Deployment & Self-Healing Control Plane**
 
-[![Tests](https://github.com/YOUR_USERNAME/devops-copilot-swarm/actions/workflows/deploy.yml/badge.svg)](https://github.com/YOUR_USERNAME/devops-copilot-swarm/actions)
+[![Tests](https://github.com/ansiee3103/devops-copilot-swarm/actions/workflows/deploy.yml/badge.svg)](https://github.com/ansiee3103/devops-copilot-swarm/actions)
 [![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -13,9 +13,9 @@
 *A production-grade multi-agent AI system that makes microservice deployments
 intelligent, risk-aware, and autonomous.*
 
-[Live Demo](https://13.126.249.86.nip.io/dashboard/index.html) •
-[API Docs](https://13.126.249.86.nip.io/docs) •
-[Report Bug](https://github.com/YOUR_USERNAME/devops-copilot-swarm/issues)
+[Live Demo](http://localhost:8080/dashboard/index.html) •
+[API Docs](http://localhost:8080/docs) •
+[Report Bug](https://github.com/ansiee3103/devops-copilot-swarm/issues)
 
 </div>
 
@@ -55,7 +55,7 @@ DevOps Copilot Swarm deploys your microservices **intelligently**:
 ## 🤖 AI Agents
 
 | Agent                | Role                            |  Output                     |
-|---------------------|--------------------------------- |---------------------------- |
+|--------------------- |--------------------------------- |---------------------------- |
 | 🧠 **Orchestrator** | Analyzes repo, plans deployment  | Deployment plan            |
 | 🏗️ **Builder**      | Generates production configs     | Dockerfile, K8s, CI/CD     |
 | 🔍 **Blast Radius** | Predicts risk & impact           | Risk score 0-10            |
@@ -156,7 +156,7 @@ k6 run tests/load/k6_test.js
 | GET    | `/api/v1/aiops/predict/window`      | Best deploy time   |
 | POST   | `/api/v1/cluster/chat`              | NL cluster queries |
 
-Full docs: https://13.126.249.86.nip.io/docs
+Full docs: https:yourip.nip.io/docs
 
 ## 🔌 Integrations
 

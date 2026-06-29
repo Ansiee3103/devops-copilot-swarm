@@ -9,7 +9,7 @@ import concurrent.futures
 import requests
 import pytest
 
-BASE_URL = "https://13.126.249.86.nip.io"
+BASE_URL = "http://localhost:8080"
 
 @pytest.fixture(scope="module")
 def token():

@@ -7,7 +7,7 @@ logger = get_logger("secrets_scanner")
 SECRET_PATTERNS = {
     "AWS Access Key ID": r"\b(AKIA|ASCA|ASIA)[A-Z0-9]{16}\b",
     "AWS Secret Access Key": r"(?i)aws_secret_access_key\s*[:=]\s*['\"][0-9a-zA-Z\/+]{40}['\"]",
-    "Private Key": r"-----BEGIN [A-Z ]+ PRIVATE KEY-----",
+    "Private Key": r"-----BEGIN [A-Z ]*PRIVATE KEY-----",
     "Generic API Key / Token": r"(?i)(api[_-]?key|secret|passwd|password|token)\s*[:=]\s*['\"][0-9a-zA-Z\-_]{16,40}['\"]",
     "Slack Webhook": r"https://hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[a-zA-Z0-9]+"
 }

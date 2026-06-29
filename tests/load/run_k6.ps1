@@ -1,6 +1,6 @@
 param(
     [string]$Test = "smoke",
-    [string]$URL  = "https://13.126.249.86.nip.io"
+    [string]$URL  = "http://localhost:8080"
 )
 Write-Host "🚀 Running k6 $Test test against $URL" -ForegroundColor Cyan
 switch ($Test) {
