@@ -11,7 +11,7 @@
 
 **Please do NOT open a public GitHub issue for security vulnerabilities.**
 
-Email: ansiee3103@email.com
+Email: ansiee3103@gmail.com
 
 Include:
 - Description of the vulnerability
